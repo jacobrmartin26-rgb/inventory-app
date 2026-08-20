@@ -3,21 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Household Goods Descriptive Inventory</title>
+<title>Digital Inventory & Damage Report</title>
 <style>
   :root {
     --bg: #ffffff;
     --surface: #f7f7f8;
     --surface-raised: #ffffff;
-    --border: #d4d4d8;
-    --border-light: #e4e4e7;
+    --border: #e4e4e7;
     --text-primary: #18181b;
-    --text-secondary: #52525b;
+    --text-secondary: #71717a;
     --text-tertiary: #a1a1aa;
     --danger: #dc2626;
-    --accent: #2563eb;
-    --radius-sm: 4px;
-    --radius-md: 6px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
     --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
@@ -26,46 +25,44 @@
       --bg: #09090b;
       --surface: #18181b;
       --surface-raised: #27272a;
-      --border: #52525b;
-      --border-light: #3f3f46;
+      --border: #3f3f46;
       --text-primary: #fafafa;
-      --text-secondary: #d4d4d8;
+      --text-secondary: #a1a1aa;
       --text-tertiary: #71717a;
     }
   }
   * { box-sizing: border-box; }
   html, body {
-    margin: 0; padding: 0;
+    margin: 0;
     font-family: var(--font-sans);
     background: var(--bg);
     color: var(--text-primary);
+    padding: 12px;
+    line-height: 1.5;
     -webkit-tap-highlight-color: transparent;
-    overscroll-behavior-y: none;
   }
-  body { padding: 8px; font-size: 13px; line-height: 1.4; }
-
   .tabs {
     display: flex;
-    gap: 2px;
+    gap: 4px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 10px;
+    margin-bottom: 16px;
     position: sticky;
     top: 0;
     background: var(--bg);
-    z-index: 20;
-    padding-top: 2px;
+    z-index: 10;
+    padding-top: 4px;
     overflow-x: auto;
   }
   .tab-btn {
-    padding: 8px 12px;
+    padding: 10px 16px;
     background: none;
     border: none;
     cursor: pointer;
     color: var(--text-secondary);
     font-weight: 500;
-    font-size: 13px;
+    font-size: 14px;
     border-bottom: 2px solid transparent;
-    transition: all 100ms ease-out;
+    transition: all 120ms ease-out;
     font-family: inherit;
     white-space: nowrap;
     flex-shrink: 0;
@@ -74,266 +71,59 @@
     color: var(--text-primary);
     border-bottom-color: var(--text-primary);
   }
-  .panel { display: none; padding-bottom: 40px; }
+  .panel { display: none; }
   .panel.active { display: block; }
 
-  /* Paper-form header */
-  .form-header {
-    border: 2px solid var(--text-primary);
-    margin-bottom: 10px;
-    background: var(--bg);
-  }
-  .form-header-top {
+  .form-grid {
     display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: 0;
-    border-bottom: 2px solid var(--text-primary);
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 16px;
   }
-  .form-header-top > div {
-    padding: 6px 10px;
-    border-right: 1px solid var(--border);
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
-  .form-header-top > div:last-child { border-right: none; }
-  .form-header-mid {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto auto;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .form-header-mid > div {
-    padding: 6px 10px;
-    border-right: 1px solid var(--border);
-  }
-  .form-header-mid > div:last-child { border-right: none; }
-  .form-label {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+  .field label {
+    font-size: 12px;
     color: var(--text-secondary);
-    margin-bottom: 2px;
-    font-weight: 600;
+    font-weight: 500;
   }
-  .form-header input {
-    width: 100%;
-    border: none;
-    background: transparent;
-    font-size: 14px;
-    color: var(--text-primary);
-    font-family: inherit;
-    padding: 2px 0;
-  }
-  .form-header input:focus { outline: none; }
-
-  /* Legend */
-  .legend-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 9px;
-    color: var(--text-secondary);
-  }
-  .legend-row > div {
-    padding: 4px 10px;
-    border-right: 1px solid var(--border);
-  }
-  .legend-row > div:last-child { border-right: none; }
-
-  /* Inventory grid - exact paper match */
-  .inv-sheet {
-    border: 2px solid var(--text-primary);
-    background: var(--bg);
-  }
-  .inv-grid-header {
-    display: grid;
-    grid-template-columns: 36px 32px 1fr 32px 2.2fr 70px 36px 44px;
-    gap: 0;
-    border-bottom: 2px solid var(--text-primary);
-    background: var(--surface);
-  }
-  .inv-grid-header > div {
-    padding: 5px 4px;
-    font-size: 9px;
-    font-weight: 700;
-    text-transform: uppercase;
-    text-align: center;
-    border-right: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1.2;
-  }
-  .inv-grid-header > div:last-child { border-right: none; }
-
-  .inv-row {
-    display: grid;
-    grid-template-columns: 36px 32px 1fr 32px 2.2fr 70px 36px 44px;
-    gap: 0;
-    border-bottom: 1px solid var(--border-light);
-    min-height: 34px;
-  }
-  .inv-row:last-child { border-bottom: none; }
-  .inv-row > div {
-    border-right: 1px solid var(--border-light);
-    padding: 2px 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-  .inv-row > div:last-child { border-right: none; }
-  .inv-row > div.wide { justify-content: flex-start; }
-
-  .inv-row input[type="text"],
-  .inv-row textarea {
-    width: 100%;
-    height: 100%;
-    border: none;
-    background: transparent;
-    font-size: 13px;
-    color: var(--text-primary);
-    font-family: inherit;
-    padding: 2px 4px;
-    resize: none;
-    line-height: 1.3;
-  }
-  .inv-row input:focus, .inv-row textarea:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-    background: rgba(37,99,235,0.04);
-    z-index: 2;
-  }
-  .inv-row input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--text-primary);
-    cursor: pointer;
-  }
-  .row-num {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-tertiary);
-    user-select: none;
-    cursor: pointer;
-    position: relative;
-  }
-  .row-num.selected {
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
-    color: var(--accent);
-    font-weight: 700;
-  }
-  .row-num.target-hover {
-    background: color-mix(in srgb, var(--accent) 6%, transparent);
-  }
-  .row-num::after {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: var(--accent);
-    opacity: 0;
-    transition: opacity 100ms;
-  }
-  .row-num.selected::after { opacity: 1; }
-
-  .photo-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    flex-wrap: wrap;
-    padding: 2px;
-  }
-  .img-thumb {
-    width: 22px;
-    height: 22px;
-    object-fit: cover;
-    border-radius: 2px;
-    cursor: pointer;
+  .field input, .field select, .field textarea {
+    padding: 10px 12px;
     border: 1px solid var(--border);
-  }
-  .photo-btn {
-    width: 22px; height: 22px;
-    display: flex; align-items: center; justify-content: center;
-    border: 1px dashed var(--border);
-    border-radius: 2px;
-    background: none;
-    cursor: pointer;
-    color: var(--text-tertiary);
-    padding: 0;
-  }
-
-  /* Bottom signature area */
-  .bottom-area {
-    border: 2px solid var(--text-primary);
-    border-top: none;
-    padding: 10px;
-  }
-  .sig-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .sig-box {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 8px;
+    border-radius: var(--radius-md);
     background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: 15px;
+    font-family: inherit;
   }
-  .sig-box label {
-    font-size: 10px;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    font-weight: 600;
-    display: block;
-    margin-bottom: 4px;
-  }
-  .sig-canvas {
-    width: 100%;
-    height: 80px;
-    display: block;
-    cursor: crosshair;
-    touch-action: none;
-    background: var(--bg);
-    border-radius: 2px;
-  }
-  .sig-actions {
-    display: flex;
-    gap: 6px;
-    margin-top: 4px;
+  .field input:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--text-primary);
   }
 
-  .tape-info {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    gap: 8px;
-    font-size: 11px;
-    border-top: 1px solid var(--border);
-    padding-top: 8px;
-  }
-
-  /* Page tabs */
   .page-tabs {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     align-items: center;
     flex-wrap: wrap;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
   .page-tab {
-    padding: 6px 12px;
+    padding: 8px 14px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background: var(--surface);
     cursor: pointer;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-primary);
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     font-family: inherit;
     font-weight: 500;
+    flex-shrink: 0;
   }
   .page-tab.active {
     background: var(--text-primary);
@@ -341,69 +131,86 @@
     border-color: var(--text-primary);
   }
 
-  /* Condition sheet */
-  .cond-grid-header {
+  .header-summary {
     display: grid;
-    grid-template-columns: 36px 100px 1fr 44px;
-    gap: 0;
-    border-bottom: 2px solid var(--text-primary);
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    padding: 12px;
     background: var(--surface);
+    border-radius: var(--radius-md);
+    line-height: 1.5;
   }
-  .cond-grid-header > div {
-    padding: 5px 4px;
-    font-size: 9px;
-    font-weight: 700;
-    text-transform: uppercase;
-    text-align: center;
-    border-right: 1px solid var(--border);
+  @media (min-width: 640px) {
+    .header-summary { grid-template-columns: repeat(4, 1fr); }
   }
-  .cond-row {
-    display: grid;
-    grid-template-columns: 36px 100px 1fr 44px;
-    gap: 0;
-    border-bottom: 1px solid var(--border-light);
-    min-height: 34px;
-  }
-  .cond-row > div {
-    border-right: 1px solid var(--border-light);
-    padding: 2px 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .cond-row > div:last-child { border-right: none; }
-  .cond-row > div.wide { justify-content: flex-start; }
 
-  /* Overlay */
-  .img-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.9);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    cursor: zoom-out;
-    padding: 16px;
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
   }
-  .img-overlay img {
-    max-width: 100%;
-    max-height: 100%;
+  table.inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+    background: var(--surface-raised);
+  }
+  table.inv-table th {
+    background: var(--surface);
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  table.inv-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+    font-size: 13px;
+  }
+  table.inv-table tr:last-child td { border-bottom: none; }
+  table.inv-table input[type="text"],
+  table.inv-table input[type="number"] {
+    width: 100%;
+    border: 1px solid transparent;
+    background: transparent;
+    font-size: 13px;
+    color: var(--text-primary);
+    padding: 4px;
     border-radius: 4px;
-    object-fit: contain;
+  }
+  table.inv-table input[type="text"]:focus,
+  table.inv-table input[type="number"]:focus {
+    outline: none;
+    background: var(--bg);
+    border-color: var(--border);
+  }
+  table.inv-table input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--text-primary);
+    cursor: pointer;
   }
 
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 6px 10px;
-    border-radius: var(--radius-sm);
+    gap: 6px;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
     background: var(--surface);
     cursor: pointer;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--text-primary);
     font-family: inherit;
     font-weight: 500;
@@ -420,178 +227,150 @@
     padding: 4px;
     color: var(--text-secondary);
   }
-  .btn-sm { padding: 4px 8px; font-size: 11px; }
+  .btn-danger { color: var(--danger); }
+  .btn-sm { padding: 6px 10px; font-size: 12px; }
 
-  .toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--text-primary);
-    color: var(--bg);
-    padding: 8px 16px;
+  .sig-wrap {
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    font-size: 12px;
-    font-weight: 500;
-    z-index: 50;
-    opacity: 0;
-    transition: opacity 200ms;
-    pointer-events: none;
-    white-space: nowrap;
+    background: var(--surface-raised);
+    position: relative;
+    margin-bottom: 8px;
+    max-width: 400px;
   }
-  .toast.show { opacity: 1; }
+  .sig-canvas {
+    width: 100%;
+    height: 120px;
+    display: block;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  .img-thumb {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+  }
+  .img-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+  }
+  .img-overlay img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: var(--radius-md);
+    object-fit: contain;
+  }
+
+  .damage-section { margin-bottom: 24px; }
+  .damage-section h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 10px;
+  }
+  .damage-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    margin-bottom: 10px;
+    background: var(--surface-raised);
+  }
 
   .flex { display: flex; }
   .items-center { align-items: center; }
   .justify-between { justify-content: space-between; }
   .gap-1 { gap: 4px; }
-  .mb-1 { margin-bottom: 4px; }
+  .gap-2 { gap: 8px; }
+  .mt-2 { margin-top: 8px; }
   .mb-2 { margin-bottom: 8px; }
-  .text-sm { font-size: 11px; }
   .text-secondary { color: var(--text-secondary); }
-  .font-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .photo-strip { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
 
-  @media (min-width: 640px) {
-    body { padding: 16px; }
-    .inv-grid-header, .inv-row { grid-template-columns: 44px 36px 1fr 36px 2.5fr 90px 36px 52px; }
-    .cond-grid-header, .cond-row { grid-template-columns: 44px 140px 1fr 52px; }
+  @media (max-width: 640px) {
+    .form-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
-<div class="tabs">
-  <button class="tab-btn active" data-tab="setup" onclick="switchTab('setup')">Setup</button>
-  <button class="tab-btn" data-tab="inventory" onclick="switchTab('inventory')">Inventory</button>
-  <button class="tab-btn" data-tab="premove" onclick="switchTab('premove')">Pre-move condition</button>
-  <button class="tab-btn" data-tab="postmove" onclick="switchTab('postmove')">Post-move condition</button>
-</div>
+<div id="app">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="setup" onclick="switchTab('setup')">Setup</button>
+    <button class="tab-btn" data-tab="inventory" onclick="switchTab('inventory')">Inventory</button>
+    <button class="tab-btn" data-tab="damage" onclick="switchTab('damage')">Damage report</button>
+  </div>
 
-<div id="panel-setup" class="panel active">
-  <div class="form-header">
-    <div class="form-header-top">
-      <div>
-        <div class="form-label">Shipper's Name</div>
-        <input id="s-name" placeholder="Kathleen Kerr" oninput="updateSetup()">
-      </div>
-      <div>
-        <div class="form-label">Carrier's Reference No</div>
-        <input id="s-ref" placeholder="485951" oninput="updateSetup()">
-      </div>
-      <div>
-        <div class="form-label">Bill of Lading No</div>
-        <input id="s-bol" oninput="updateSetup()">
-      </div>
-    </div>
-    <div class="form-header-mid">
-      <div>
-        <div class="form-label">Origin City, State</div>
-        <input id="s-origin" placeholder="Youngville, NC" oninput="updateSetup()">
-      </div>
-      <div>
-        <div class="form-label">Destination City, State</div>
-        <input id="s-dest" placeholder="Southington, CT" oninput="updateSetup()">
-      </div>
-      <div>
-        <div class="form-label">Tape Lot No</div>
-        <input id="s-tape" oninput="updateSetup()">
-      </div>
-      <div>
-        <div class="form-label">Tape Color</div>
-        <input id="s-tcolor" oninput="updateSetup()">
-      </div>
+  <div id="panel-setup" class="panel active">
+    <div class="form-grid">
+      <div class="field"><label>Shipper name</label><input id="s-name" oninput="updateSetup()"></div>
+      <div class="field"><label>Carrier reference no</label><input id="s-ref" oninput="updateSetup()"></div>
+      <div class="field"><label>Origin city</label><input id="s-ocity" oninput="updateSetup()"></div>
+      <div class="field"><label>Origin state</label><input id="s-ostate" oninput="updateSetup()"></div>
+      <div class="field"><label>Destination city</label><input id="s-dcity" oninput="updateSetup()"></div>
+      <div class="field"><label>Destination state</label><input id="s-dstate" oninput="updateSetup()"></div>
+      <div class="field"><label>Bill of lading no</label><input id="s-bol" oninput="updateSetup()"></div>
+      <div class="field"><label>Tape lot no</label><input id="s-tape" oninput="updateSetup()"></div>
+      <div class="field"><label>Tape color</label><input id="s-tcolor" oninput="updateSetup()"></div>
+      <div class="field"><label>Driver (origin)</label><input id="s-dorig" oninput="updateSetup()"></div>
+      <div class="field"><label>Date (origin)</label><input type="date" id="s-dorig-date" oninput="updateSetup()"></div>
+      <div class="field"><label>Driver (destination)</label><input id="s-ddest" oninput="updateSetup()"></div>
+      <div class="field"><label>Date (destination)</label><input type="date" id="s-ddest-date" oninput="updateSetup()"></div>
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
-    <div class="field">
-      <label style="font-size:11px;color:var(--text-secondary);font-weight:600;">Driver (Origin)</label>
-      <input id="s-dorig" oninput="updateSetup()" style="padding:8px;border:1px solid var(--border);border-radius:4px;font-size:14px;">
+  <div id="panel-inventory" class="panel">
+    <div class="flex items-center justify-between mb-2">
+      <div class="page-tabs" id="page-tabs"></div>
+      <button class="btn btn-sm" onclick="addInventoryPage()">+ Add page</button>
     </div>
-    <div class="field">
-      <label style="font-size:11px;color:var(--text-secondary);font-weight:600;">Date (Origin)</label>
-      <input type="date" id="s-dorig-date" oninput="updateSetup()" style="padding:8px;border:1px solid var(--border);border-radius:4px;font-size:14px;">
-    </div>
-    <div class="field">
-      <label style="font-size:11px;color:var(--text-secondary);font-weight:600;">Driver (Destination)</label>
-      <input id="s-ddest" oninput="updateSetup()" style="padding:8px;border:1px solid var(--border);border-radius:4px;font-size:14px;">
-    </div>
-    <div class="field">
-      <label style="font-size:11px;color:var(--text-secondary);font-weight:600;">Date (Destination)</label>
-      <input type="date" id="s-ddest-date" oninput="updateSetup()" style="padding:8px;border:1px solid var(--border);border-radius:4px;font-size:14px;">
-    </div>
+    <div id="inventory-content"></div>
   </div>
-</div>
 
-<div id="panel-inventory" class="panel">
-  <div class="flex items-center justify-between mb-2">
-    <div class="page-tabs" id="page-tabs"></div>
-    <button class="btn btn-sm" onclick="addPage()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      Add page
-    </button>
+  <div id="panel-damage" class="panel">
+    <div id="damage-content"></div>
   </div>
-  <div id="inventory-content"></div>
-</div>
-
-<div id="panel-premove" class="panel">
-  <div id="premove-content"></div>
-</div>
-
-<div id="panel-postmove" class="panel">
-  <div id="postmove-content"></div>
 </div>
 
 <div id="img-overlay" class="img-overlay" onclick="this.style.display='none'">
   <img id="img-overlay-img" src="" alt="">
 </div>
-<div id="toast" class="toast"></div>
 
 <script>
-const ROWS_PER_PAGE = 30;
-
 let state = {
-  setup: {},
-  pages: [makePage(1)],
+  setup: { name: '', ref: '', oCity: '', oState: '', dCity: '', dState: '', bol: '', tape: '', tColor: '', dOrig: '', dOrigDate: '', dDest: '', dDestDate: '' },
+  inventory: [{ pageNum: 1, items: [{ itemNo: 1, check: false, carton: '', cp: false, contents: '', room: '', shipperCheck: false, images: [] }], signature: null, propagate: true }],
   currentPage: 0,
-  premove: Array.from({length: 20}, () => ({loc:'', desc:'', imgs:[]})),
-  postmove: Array.from({length: 20}, () => ({loc:'', desc:'', imgs:[]})),
-  dupSource: null
+  damage: {
+    pre: [{ loc: '', desc: '', imgs: [] }],
+    post: [{ loc: '', desc: '', imgs: [] }]
+  }
 };
-
-function makePage(num) {
-  return {
-    pageNum: num,
-    items: Array.from({length: ROWS_PER_PAGE}, (_, i) => ({
-      itemNo: i + 1,
-      check: false,
-      carton: '',
-      cp: false,
-      contents: '',
-      room: '',
-      shipperCheck: false,
-      images: []
-    })),
-    signature: null,
-    propagate: true
-  };
-}
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
   if (tab === 'inventory') renderInventory();
-  if (tab === 'premove') renderCondition('premove');
-  if (tab === 'postmove') renderCondition('postmove');
+  if (tab === 'damage') renderDamage();
 }
 
 function updateSetup() {
   state.setup = {
     name: document.getElementById('s-name').value,
     ref: document.getElementById('s-ref').value,
+    oCity: document.getElementById('s-ocity').value,
+    oState: document.getElementById('s-ostate').value,
+    dCity: document.getElementById('s-dcity').value,
+    dState: document.getElementById('s-dstate').value,
     bol: document.getElementById('s-bol').value,
-    origin: document.getElementById('s-origin').value,
-    dest: document.getElementById('s-dest').value,
     tape: document.getElementById('s-tape').value,
     tColor: document.getElementById('s-tcolor').value,
     dOrig: document.getElementById('s-dorig').value,
@@ -599,16 +378,18 @@ function updateSetup() {
     dDest: document.getElementById('s-ddest').value,
     dDestDate: document.getElementById('s-ddest-date').value
   };
-  renderPageTabs();
 }
 
-function addPage() {
-  const prev = state.pages[state.pages.length - 1];
-  const p = makePage(state.pages.length + 1);
-  p.signature = prev.propagate ? prev.signature : null;
-  p.propagate = true;
-  state.pages.push(p);
-  state.currentPage = state.pages.length - 1;
+function addInventoryPage() {
+  const prev = state.inventory[state.inventory.length - 1];
+  const nextSig = (prev && prev.propagate) ? prev.signature : null;
+  state.inventory.push({
+    pageNum: state.inventory.length + 1,
+    items: [{ itemNo: 1, check: false, carton: '', cp: false, contents: '', room: '', shipperCheck: false, images: [] }],
+    signature: nextSig,
+    propagate: true
+  });
+  state.currentPage = state.inventory.length - 1;
   renderInventory();
 }
 
@@ -618,88 +399,62 @@ function switchPage(idx) {
 }
 
 function removePage(idx) {
-  if (state.pages.length <= 1) return;
-  state.pages.splice(idx, 1);
-  state.pages.forEach((p, i) => p.pageNum = i + 1);
-  if (state.currentPage >= state.pages.length) state.currentPage = state.pages.length - 1;
+  if (state.inventory.length <= 1) return;
+  state.inventory.splice(idx, 1);
+  state.inventory.forEach((p, i) => p.pageNum = i + 1);
+  if (state.currentPage >= state.inventory.length) state.currentPage = state.inventory.length - 1;
   renderInventory();
 }
 
-function updateItem(pageIdx, rowIdx, field, value) {
-  state.pages[pageIdx].items[rowIdx][field] = value;
+function addItem(pageIdx) {
+  const page = state.inventory[pageIdx];
+  const itemNo = page.items.length > 0 ? page.items[page.items.length - 1].itemNo + 1 : 1;
+  page.items.push({ itemNo, check: false, carton: '', cp: false, contents: '', room: '', shipperCheck: false, images: [] });
+  renderInventory();
+}
+
+function removeItem(pageIdx, itemIdx) {
+  state.inventory[pageIdx].items.splice(itemIdx, 1);
+  renderInventory();
+}
+
+function updateItem(pageIdx, itemIdx, field, value) {
+  state.inventory[pageIdx].items[itemIdx][field] = value;
   if (field === 'carton') updateCartonCount();
 }
 
 function updateCartonCount() {
   let total = 0;
-  state.pages.forEach(p => {
+  state.inventory.forEach(p => {
     p.items.forEach(it => {
-      const m = String(it.carton).match(/^\\s*(\\d+(?:\\.\\d+)?)/);
-      if (m) total += parseFloat(m[1]);
+      const match = String(it.carton).match(/^\s*(\d+(?:\.\d+)?)/);
+      if (match) total += parseFloat(match[1]);
     });
   });
   const el = document.getElementById('carton-count');
-  if (el) el.textContent = total.toFixed(1).replace(/\\.0$/, '');
+  if (el) el.textContent = total;
 }
 
-/* ---------- Duplicate / Fill-down ---------- */
-function startDup(pageIdx, rowIdx) {
-  state.dupSource = { pageIdx, rowIdx };
-  showToast('Tap another row to fill down to it');
-  renderInventory();
-}
-
-function cancelDup() {
-  state.dupSource = null;
-  renderInventory();
-}
-
-function applyDup(pageIdx, targetRowIdx) {
-  if (!state.dupSource) return;
-  const src = state.pages[state.dupSource.pageIdx].items[state.dupSource.rowIdx];
-  const start = Math.min(state.dupSource.rowIdx, targetRowIdx);
-  const end = Math.max(state.dupSource.rowIdx, targetRowIdx);
-  for (let i = start; i <= end; i++) {
-    if (i === state.dupSource.rowIdx) continue;
-    const it = state.pages[pageIdx].items[i];
-    it.carton = src.carton;
-    it.contents = src.contents;
-    it.room = src.room;
-    it.cp = src.cp;
-  }
-  state.dupSource = null;
-  renderInventory();
-  showToast('Filled down');
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
-}
-
-/* ---------- Photos ---------- */
-function triggerImage(pageIdx, rowIdx) {
+function triggerImage(pageIdx, itemIdx) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  input.capture = 'environment';
+  input.multiple = true;
   input.onchange = e => {
     Array.from(e.target.files).forEach(file => {
-      const r = new FileReader();
-      r.onload = ev => {
-        state.pages[pageIdx].items[rowIdx].images.push(ev.target.result);
+      const reader = new FileReader();
+      reader.onload = ev => {
+        state.inventory[pageIdx].items[itemIdx].images.push(ev.target.result);
         renderInventory();
       };
-      r.readAsDataURL(file);
+      reader.readAsDataURL(file);
     });
   };
   input.click();
 }
 
-function removeImage(pageIdx, rowIdx, imgIdx) {
-  state.pages[pageIdx].items[rowIdx].images.splice(imgIdx, 1);
+function removeImage(pageIdx, itemIdx, imgIdx) {
+  state.inventory[pageIdx].items[itemIdx].images.splice(imgIdx, 1);
   renderInventory();
 }
 
@@ -708,31 +463,46 @@ function showImage(src) {
   document.getElementById('img-overlay').style.display = 'flex';
 }
 
-/* ---------- Signature ---------- */
-function initSig(pageIdx) {
+function initSignature(pageIdx) {
   const canvas = document.getElementById('sig-' + pageIdx);
   if (!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
   const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  ctx.lineWidth = 1.8;
+  ctx.lineWidth = 2;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  ctx.strokeStyle = getComputedStyle(document.body).color;
+  ctx.strokeStyle = '#000000';
 
   let drawing = false;
+
   function getPos(e) {
-    const r = canvas.getBoundingClientRect();
-    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-    const cy = e.touches ? e.touches[0].clientY : e.clientY;
-    return { x: cx - r.left, y: cy - r.top };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
   }
-  function start(e) { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }
-  function move(e) { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }
-  function end() { drawing = false; ctx.beginPath(); state.pages[pageIdx].signature = canvas.toDataURL(); propagateSig(pageIdx); }
+
+  function start(e) {
+    drawing = true;
+    const p = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    if (e.cancelable) e.preventDefault();
+  }
+  function move(e) {
+    if (!drawing) return;
+    const p = getPos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    if (e.cancelable) e.preventDefault();
+  }
+  function end() {
+    if (!drawing) return;
+    drawing = false;
+    state.inventory[pageIdx].signature = canvas.toDataURL();
+    propagateSignature(pageIdx);
+  }
 
   canvas.addEventListener('mousedown', start);
   canvas.addEventListener('mousemove', move);
@@ -742,267 +512,189 @@ function initSig(pageIdx) {
   canvas.addEventListener('touchmove', move, {passive: false});
   canvas.addEventListener('touchend', end);
 
-  if (state.pages[pageIdx].signature) {
+  if (state.inventory[pageIdx].signature) {
     const img = new Image();
-    img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
-    img.src = state.pages[pageIdx].signature;
+    img.onload = () => ctx.drawImage(img, 0, 0);
+    img.src = state.inventory[pageIdx].signature;
   }
 }
 
-function clearSig(pageIdx) {
-  state.pages[pageIdx].signature = null;
-  const c = document.getElementById('sig-' + pageIdx);
-  if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
-  propagateSig(pageIdx);
+function clearSignature(pageIdx) {
+  state.inventory[pageIdx].signature = null;
+  const canvas = document.getElementById('sig-' + pageIdx);
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  propagateSignature(pageIdx);
 }
 
-function propagateSig(fromIdx) {
-  const sig = state.pages[fromIdx].signature;
-  const el = document.getElementById('prop-' + fromIdx);
-  const propagate = el ? el.checked : true;
-  if (!propagate || !sig) return;
-  for (let i = fromIdx + 1; i < state.pages.length; i++) {
-    if (state.pages[i].propagate) state.pages[i].signature = sig;
+function propagateSignature(fromIdx) {
+  const sig = state.inventory[fromIdx].signature;
+  const propagate = state.inventory[fromIdx].propagate;
+  if (!propagate) return;
+  for (let i = fromIdx + 1; i < state.inventory.length; i++) {
+    if (state.inventory[i].propagate) {
+      state.inventory[i].signature = sig;
+    }
   }
   renderInventory();
 }
 
-/* ---------- Rendering ---------- */
-function escapeHtml(t) {
-  const d = document.createElement('div');
-  d.textContent = t;
-  return d.innerHTML;
-}
-
-function renderPageTabs() {
-  const el = document.getElementById('page-tabs');
-  if (!el) return;
-  el.innerHTML = state.pages.map((p, i) => `
-    <button class="page-tab ${i === state.currentPage ? 'active' : ''}" onclick="switchPage(${i})">
-      Pg ${p.pageNum}/${state.pages.length}
-      ${state.pages.length > 1 ? `<span style="margin-left:4px;opacity:0.6;" onclick="event.stopPropagation();removePage(${i})">×</span>` : ''}
-    </button>
-  `).join('');
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text || '';
+  return div.innerHTML;
 }
 
 function renderInventory() {
   const container = document.getElementById('inventory-content');
-  const page = state.pages[state.currentPage];
+  const page = state.inventory[state.currentPage];
+  const tabsEl = document.getElementById('page-tabs');
+
+  tabsEl.innerHTML = state.inventory.map((p, i) => `
+    <button class="page-tab ${i === state.currentPage ? 'active' : ''}" onclick="switchPage(${i})">
+      Page ${p.pageNum}
+      ${state.inventory.length > 1 ? `<span onclick="event.stopPropagation(); removePage(${i})">×</span>` : ''}
+    </button>
+  `).join('');
+
   const s = state.setup;
-  renderPageTabs();
-
   let html = `
-    <div class="form-header">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:2px solid var(--text-primary);">
-        <div style="font-size:11px;font-weight:700;">NEW WORLD VAN LINES, INC. &nbsp;|&nbsp; HOUSEHOLD GOODS DESCRIPTIVE INVENTORY</div>
-        <div style="font-size:11px;font-weight:700;">Pg <span class="font-mono">${page.pageNum}</span> / <span class="font-mono">${state.pages.length}</span></div>
-      </div>
-      <div class="form-header-top">
-        <div><div class="form-label">Shipper's Name</div><div style="font-size:14px;">${escapeHtml(s.name) || '&nbsp;'}</div></div>
-        <div><div class="form-label">Carrier's Reference No</div><div style="font-size:14px;">${escapeHtml(s.ref) || '&nbsp;'}</div></div>
-        <div><div class="form-label">Bill of Lading No</div><div style="font-size:14px;">${escapeHtml(s.bol) || '&nbsp;'}</div></div>
-      </div>
-      <div class="form-header-mid">
-        <div><div class="form-label">Origin City, State</div><div style="font-size:14px;">${escapeHtml(s.origin) || '&nbsp;'}</div></div>
-        <div><div class="form-label">Destination City, State</div><div style="font-size:14px;">${escapeHtml(s.dest) || '&nbsp;'}</div></div>
-        <div><div class="form-label">Tape Lot No</div><div style="font-size:14px;">${escapeHtml(s.tape) || '&nbsp;'}</div></div>
-        <div><div class="form-label">Tape Color</div><div style="font-size:14px;">${escapeHtml(s.tColor) || '&nbsp;'}</div></div>
-      </div>
+    <div class="header-summary">
+      <div><strong>${escapeHtml(s.name) || '—'}</strong><br>Shipper</div>
+      <div>${escapeHtml(s.oCity)}${s.oState ? ', ' + escapeHtml(s.oState) : ''} → ${escapeHtml(s.dCity)}${s.dState ? ', ' + escapeHtml(s.dState) : ''}<br>Route</div>
+      <div>BOL: ${escapeHtml(s.bol) || '—'}<br>Ref: ${escapeHtml(s.ref) || '—'}</div>
+      <div>Tape Lot: ${escapeHtml(s.tape) || '—'}<br>Color: ${escapeHtml(s.tColor) || '—'}</div>
     </div>
 
-    <div class="flex items-center justify-between mb-1">
-      <div class="text-sm text-secondary">Cartons: <span id="carton-count" class="font-mono">0</span></div>
-      <label class="text-sm text-secondary" style="display:flex;align-items:center;gap:4px;cursor:pointer;">
-        <input type="checkbox" id="prop-${state.currentPage}" ${page.propagate ? 'checked' : ''} onchange="state.pages[${state.currentPage}].propagate=this.checked; propagateSig(${state.currentPage});">
-        Push-through signature
-      </label>
+    <div class="flex items-center justify-between mb-2">
+      <div>Total Cartons: <strong id="carton-count">0</strong></div>
+      <button class="btn btn-sm" onclick="addItem(${state.currentPage})">+ Add Item</button>
     </div>
 
-    <div class="inv-sheet">
-      <div class="inv-grid-header">
-        <div>Item<br>No</div>
-        <div>Chk</div>
-        <div>Carton Size<br>or Article</div>
-        <div>CP</div>
-        <div>Contents of Carton<br>or Condition of Article</div>
-        <div>Room</div>
-        <div>Ship<br>Chk</div>
-        <div>Photo</div>
-      </div>
+    <div class="table-responsive">
+      <table class="inv-table">
+        <thead>
+          <tr>
+            <th style="width:50px;">Item</th>
+            <th style="width:40px;">Chk</th>
+            <th style="width:70px;">Carton</th>
+            <th style="width:40px;">C/P</th>
+            <th>Contents / Condition</th>
+            <th style="width:100px;">Room</th>
+            <th style="width:40px;">Shpr</th>
+            <th style="width:90px;">Photos</th>
+            <th style="width:40px;"></th>
+          </tr>
+        </thead>
+        <tbody>
   `;
 
   page.items.forEach((it, idx) => {
-    const isSource = state.dupSource && state.dupSource.pageIdx === state.currentPage && state.dupSource.rowIdx === idx;
-    const imgs = it.images.map((img, i) => `
-      <img src="${img}" class="img-thumb" onclick="showImage('${img}')" alt="">
-      <button class="btn-ghost" style="padding:0;width:14px;height:14px;" onclick="removeImage(${state.currentPage},${idx},${i})">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-      </button>
-    `).join('');
-
     html += `
-      <div class="inv-row">
-        <div class="row-num ${isSource ? 'selected' : ''}"
-          onpointerdown="handleRowPointerDown(event, ${state.currentPage}, ${idx})"
-          onpointerup="handleRowPointerUp(event, ${state.currentPage}, ${idx})">
-          ${it.itemNo}
-        </div>
-        <div><input type="checkbox" ${it.check ? 'checked' : ''} onchange="updateItem(${state.currentPage},${idx},'check',this.checked)"></div>
-        <div class="wide"><input type="text" value="${escapeHtml(it.carton)}" oninput="updateItem(${state.currentPage},${idx},'carton',this.value)" placeholder="3.0 ctn"></div>
-        <div><input type="checkbox" ${it.cp ? 'checked' : ''} onchange="updateItem(${state.currentPage},${idx},'cp',this.checked)"></div>
-        <div class="wide"><textarea rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';updateItem(${state.currentPage},${idx},'contents',this.value)" placeholder="Decor, dishes...">${escapeHtml(it.contents)}</textarea></div>
-        <div class="wide"><input type="text" value="${escapeHtml(it.room)}" oninput="updateItem(${state.currentPage},${idx},'room',this.value)" placeholder="LR"></div>
-        <div><input type="checkbox" ${it.shipperCheck ? 'checked' : ''} onchange="updateItem(${state.currentPage},${idx},'shipperCheck',this.checked)"></div>
-        <div class="photo-cell">
-          ${imgs}
-          <button class="photo-btn" onclick="triggerImage(${state.currentPage},${idx})">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          </button>
-        </div>
-      </div>
+      <tr>
+        <td><input type="number" value="${it.itemNo}" onchange="updateItem(${state.currentPage}, ${idx}, 'itemNo', parseInt(this.value)||0)"></td>
+        <td style="text-align:center;"><input type="checkbox" ${it.check ? 'checked' : ''} onchange="updateItem(${state.currentPage}, ${idx}, 'check', this.checked)"></td>
+        <td><input type="text" value="${escapeHtml(it.carton)}" onchange="updateItem(${state.currentPage}, ${idx}, 'carton', this.value)"></td>
+        <td style="text-align:center;"><input type="checkbox" ${it.cp ? 'checked' : ''} onchange="updateItem(${state.currentPage}, ${idx}, 'cp', this.checked)"></td>
+        <td><input type="text" value="${escapeHtml(it.contents)}" onchange="updateItem(${state.currentPage}, ${idx}, 'contents', this.value)"></td>
+        <td><input type="text" value="${escapeHtml(it.room)}" onchange="updateItem(${state.currentPage}, ${idx}, 'room', this.value)"></td>
+        <td style="text-align:center;"><input type="checkbox" ${it.shipperCheck ? 'checked' : ''} onchange="updateItem(${state.currentPage}, ${idx}, 'shipperCheck', this.checked)"></td>
+        <td>
+          <div class="photo-strip">
+            ${it.images.map((img, imgI) => `<img src="${img}" class="img-thumb" onclick="showImage('${img}')">`).join('')}
+            <button class="btn-ghost" onclick="triggerImage(${state.currentPage}, ${idx})">+</button>
+          </div>
+        </td>
+        <td><button class="btn-ghost btn-danger" onclick="removeItem(${state.currentPage}, ${idx})">×</button></td>
+      </tr>
     `;
   });
 
-  html += `</div>`;
-
-  if (state.dupSource) {
-    html += `<div class="mb-2 mt-2"><button class="btn btn-sm" onclick="cancelDup()">Cancel fill-down</button></div>`;
-  }
-
   html += `
-    <div class="bottom-area">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Remarks / Exceptions</div>
-      <textarea style="width:100%;min-height:50px;border:1px solid var(--border);border-radius:4px;padding:6px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text-primary);resize:vertical;" placeholder="Enter any remarks..."></textarea>
+        </tbody>
+      </table>
+    </div>
 
-      <div class="sig-grid">
-        <div class="sig-box">
-          <label>Driver / Owner — Origin</label>
-          <canvas id="sig-${state.currentPage}" class="sig-canvas"></canvas>
-          <div class="sig-actions">
-            <button class="btn btn-sm btn-ghost" onclick="clearSig(${state.currentPage})">Clear</button>
-          </div>
-        </div>
-        <div class="sig-box">
-          <label>Driver / Owner — Destination</label>
-          <div style="height:80px;border:1px dashed var(--border);border-radius:2px;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);font-size:12px;">
-            Signed at destination
-          </div>
-        </div>
+    <div class="mt-2">
+      <label><strong>Page Signature</strong></label>
+      <div class="sig-wrap">
+        <canvas id="sig-${state.currentPage}" class="sig-canvas" width="400" height="120"></canvas>
       </div>
-
-      <div class="tape-info">
-        <div><span class="form-label">Driver (Origin)</span><div>${escapeHtml(s.dOrig) || '—'}</div></div>
-        <div><span class="form-label">Date</span><div>${escapeHtml(s.dOrigDate) || '—'}</div></div>
-        <div><span class="form-label">Driver (Dest)</span><div>${escapeHtml(s.dDest) || '—'}</div></div>
-        <div><span class="form-label">Date</span><div>${escapeHtml(s.dDestDate) || '—'}</div></div>
+      <div class="flex items-center gap-2 mb-2">
+        <button class="btn btn-sm" onclick="clearSignature(${state.currentPage})">Clear Signature</button>
+        <label><input type="checkbox" id="prop-${state.currentPage}" ${page.propagate ? 'checked' : ''} onchange="state.inventory[${state.currentPage}].propagate = this.checked"> Apply to future pages</label>
       </div>
     </div>
   `;
 
   container.innerHTML = html;
   updateCartonCount();
-  requestAnimationFrame(() => initSig(state.currentPage));
+  setTimeout(() => initSignature(state.currentPage), 50);
 }
 
-/* Pointer handling for long-press row duplicate */
-let longPressTimer = null;
-let longPressFired = false;
+function renderDamage() {
+  const container = document.getElementById('damage-content');
+  let html = `
+    <div class="damage-section">
+      <h3>Pre-Move Residence Damage</h3>
+      ${state.damage.pre.map((d, i) => renderDamageCard('pre', i, d)).join('')}
+      <button class="btn btn-sm" onclick="addDamageItem('pre')">+ Add Pre-Move Item</button>
+    </div>
 
-function handleRowPointerDown(e, pageIdx, rowIdx) {
-  if (e.button !== 0) return;
-  longPressFired = false;
-  longPressTimer = setTimeout(() => {
-    longPressFired = true;
-    startDup(pageIdx, rowIdx);
-  }, 500);
+    <div class="damage-section">
+      <h3>Post-Move Residence Damage</h3>
+      ${state.damage.post.map((d, i) => renderDamageCard('post', i, d)).join('')}
+      <button class="btn btn-sm" onclick="addDamageItem('post')">+ Add Post-Move Item</button>
+    </div>
+  `;
+  container.innerHTML = html;
 }
 
-function handleRowPointerUp(e, pageIdx, rowIdx) {
-  clearTimeout(longPressTimer);
-  if (longPressFired) {
-    e.preventDefault();
-    return;
-  }
-  if (state.dupSource) {
-    if (state.dupSource.pageIdx === pageIdx && state.dupSource.rowIdx !== rowIdx) {
-      applyDup(pageIdx, rowIdx);
-    }
-  }
+function renderDamageCard(type, idx, item) {
+  return `
+    <div class="damage-card">
+      <div class="field mb-2"><label>Location / Area</label><input type="text" value="${escapeHtml(item.loc)}" onchange="state.damage.${type}[${idx}].loc = this.value"></div>
+      <div class="field mb-2"><label>Damage Description</label><textarea onchange="state.damage.${type}[${idx}].desc = this.value">${escapeHtml(item.desc)}</textarea></div>
+      <div class="flex items-center justify-between">
+        <div class="photo-strip">
+          ${item.imgs.map((img) => `<img src="${img}" class="img-thumb" onclick="showImage('${img}')">`).join('')}
+          <button class="btn-ghost" onclick="triggerDamageImage('${type}', ${idx})">+ Photo</button>
+        </div>
+        <button class="btn-ghost btn-danger" onclick="removeDamageItem('${type}', ${idx})">Remove</button>
+      </div>
+    </div>
+  `;
 }
 
-/* ---------- Condition sheets ---------- */
-function triggerCondImage(type, idx) {
+function addDamageItem(type) {
+  state.damage[type].push({ loc: '', desc: '', imgs: [] });
+  renderDamage();
+}
+
+function removeDamageItem(type, idx) {
+  state.damage[type].splice(idx, 1);
+  renderDamage();
+}
+
+function triggerDamageImage(type, idx) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  input.capture = 'environment';
+  input.multiple = true;
   input.onchange = e => {
     Array.from(e.target.files).forEach(file => {
-      const r = new FileReader();
-      r.onload = ev => { state[type][idx].imgs.push(ev.target.result); renderCondition(type); };
-      r.readAsDataURL(file);
+      const reader = new FileReader();
+      reader.onload = ev => {
+        state.damage[type][idx].imgs.push(ev.target.result);
+        renderDamage();
+      };
+      reader.readAsDataURL(file);
     });
   };
   input.click();
 }
-function removeCondImage(type, idx, i) { state[type][idx].imgs.splice(i, 1); renderCondition(type); }
-
-function renderCondition(type) {
-  const container = document.getElementById(type + '-content');
-  const s = state.setup;
-  const list = state[type];
-
-  let html = `
-    <div class="form-header" style="margin-bottom:10px;">
-      <div style="padding:6px 10px;border-bottom:2px solid var(--text-primary);font-size:11px;font-weight:700;text-transform:uppercase;">
-        ${type === 'premove' ? 'Pre-move Condition Report' : 'Post-move Condition Report'}
-      </div>
-      <div class="form-header-top">
-        <div><div class="form-label">Shipper's Name</div><div style="font-size:14px;">${escapeHtml(s.name) || '&nbsp;'}</div></div>
-        <div><div class="form-label">Reference No</div><div style="font-size:14px;">${escapeHtml(s.ref) || '&nbsp;'}</div></div>
-        <div><div class="form-label">Date</div><div style="font-size:14px;">${escapeHtml(type==='premove'?s.dOrigDate:s.dDestDate) || '&nbsp;'}</div></div>
-      </div>
-    </div>
-
-    <div class="inv-sheet">
-      <div class="cond-grid-header">
-        <div>No</div>
-        <div>Location / Room</div>
-        <div>Condition Description</div>
-        <div>Photos</div>
-      </div>
-  `;
-
-  list.forEach((it, idx) => {
-    const imgs = it.imgs.map((img, i) => `
-      <img src="${img}" class="img-thumb" onclick="showImage('${img}')" alt="">
-      <button class="btn-ghost" style="padding:0;width:14px;height:14px;" onclick="removeCondImage('${type}',${idx},${i})">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-      </button>
-    `).join('');
-
-    html += `
-      <div class="cond-row">
-        <div class="font-mono" style="color:var(--text-tertiary);font-size:11px;">${idx+1}</div>
-        <div class="wide"><input type="text" value="${escapeHtml(it.loc)}" oninput="state.${type}[${idx}].loc=this.value" placeholder="Living room"></div>
-        <div class="wide"><textarea rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';state.${type}[${idx}].desc=this.value" placeholder="Scuff mark on baseboard...">${escapeHtml(it.desc)}</textarea></div>
-        <div class="photo-cell">
-          ${imgs}
-          <button class="photo-btn" onclick="triggerCondImage('${type}',${idx})">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          </button>
-        </div>
-      </div>
-    `;
-  });
-
-  html += `</div>`;
-  container.innerHTML = html;
-}
-
-window.addEventListener('resize', () => {
-  if (state.pages[state.currentPage]) initSig(state.currentPage);
-});
 </script>
 </body>
 </html>

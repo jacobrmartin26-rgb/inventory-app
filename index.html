@@ -14,7 +14,6 @@
     --text-sec: #555;
     --text-hi: #000;
     --accent: #2563eb;
-    --danger: #dc2626;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -38,6 +37,7 @@
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
   }
+
   .tabs {
     display: flex;
     gap: 2px;
@@ -97,7 +97,7 @@
   .sheet {
     border: 2px solid var(--text-hi);
     background: var(--bg);
-    margin-bottom: 12px;
+    margin-bottom: 16px;
   }
   .sheet-top {
     display: grid;
@@ -126,6 +126,50 @@
     color: var(--text-sec);
     font-weight: 700;
     margin-bottom: 2px;
+  }
+
+  /* Legend */
+  .legend-wrap {
+    border-bottom: 1px solid var(--border);
+    padding: 6px 10px;
+    background: var(--surface);
+  }
+  .legend-title {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    color: var(--text-sec);
+  }
+  .legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 12px;
+  }
+  .legend-col {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px 8px;
+  }
+  .legend-col.header {
+    grid-template-columns: 1fr;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-sec);
+    margin-bottom: 2px;
+  }
+  .sym {
+    font-size: 10px;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .sym code {
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 10px;
+    margin-right: 2px;
   }
 
   .inv-table {
@@ -387,12 +431,39 @@
   .flex { display: flex; }
   .between { justify-content: space-between; }
   .items-center { align-items: center; }
-  .gap-1 { gap: 4px; }
   .mb-1 { margin-bottom: 4px; }
   .mb-2 { margin-bottom: 8px; }
   .mt-2 { margin-top: 8px; }
   .mono { font-family: ui-monospace, monospace; }
   .small { font-size: 11px; color: var(--text-sec); }
+
+  /* Print / PDF styles */
+  @media print {
+    body { padding: 0; background: #fff; color: #000; }
+    .tabs, .btn, .page-tabs, .cam-btn, .btn-ghost, .toast, #overlay { display: none !important; }
+    .panel { display: block !important; }
+    #panel-setup, #panel-tally, #panel-premove, #panel-postmove { display: none !important; }
+    #panel-inventory { display: block !important; }
+    .sheet {
+      border: 2px solid #000;
+      page-break-after: always;
+      margin-bottom: 0;
+    }
+    .sheet:last-child { page-break-after: auto; }
+    .inv-table th { background: #f0f0f0; }
+    .sig-canvas { border: 1px solid #ccc; }
+    .row-num { color: #666; }
+    input, textarea { color: #000 !important; }
+    .photo-cell .thumb { width: 28px; height: 28px; border: 1px solid #999; }
+  }
+
+  .print-stack {
+    display: none;
+  }
+  @media print {
+    .print-stack { display: block; }
+    #inv-content { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -424,9 +495,16 @@
 <div id="panel-inventory" class="panel">
   <div class="flex between items-center mb-2">
     <div class="page-tabs" id="inv-tabs"></div>
-    <button class="btn btn-sm" onclick="addPage()">+ Add page</button>
+    <div class="flex items-center gap-1">
+      <button class="btn btn-primary btn-sm" onclick="exportPDF()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="margin-right:2px;"><path d="M12 15V3m0 0L8 7m4-4l4 4M3 15v4a2 2 0 002 2h14a2 2 0 002-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Export PDF
+      </button>
+      <button class="btn btn-sm" onclick="addPage()">+ Add page</button>
+    </div>
   </div>
   <div id="inv-content"></div>
+  <div id="print-stack" class="print-stack"></div>
 </div>
 
 <div id="panel-tally" class="panel">
@@ -446,6 +524,19 @@
 
 <script>
 const ROWS = 30;
+const EXC_SYM = [
+  ['SC','Scratched'],['CH','Chipped'],['D','Dented'],['T','Torn'],
+  ['ST','Stained'],['R','Rubbed'],['M','Marred'],['BR','Broken'],
+  ['B','Burned'],['W','Water/ink'],['P','Peeling'],['F','Faded'],
+  ['G','Gouged'],['L','Loose'],['C','Cracked']
+];
+const LOC_SYM = [
+  ['1','Arm'],['2','Leg'],['3','Front'],['4','Back'],
+  ['5','Left'],['6','Right'],['7','Top'],['8','Bottom'],
+  ['9','Center'],['10','Inside'],['11','Seat'],['12','Head'],
+  ['13','Veneer'],['14','Glass'],['15','Door'],['16','Drawer'],
+  ['17','Shelf'],['18','Handle'],['19','Mirror'],['20','Base'],['21','Frame']
+];
 
 let state = {
   setup: {},
@@ -659,24 +750,30 @@ function renderTally(){
   g('tally-content').innerHTML=html;
 }
 
-function renderInvTabs(){
-  const el=g('inv-tabs'); if(!el) return;
-  el.innerHTML=state.pages.map((p,i)=>`
-    <button class="page-tab ${i===state.currentPage?'active':''}" onclick="switchPage(${i})">
-      Pg ${p.pageNum}/${state.pages.length}
-      ${state.pages.length>1?`<span style="margin-left:4px;opacity:0.5;" onclick="event.stopPropagation();removePage(${i})">×</span>`:''}
-    </button>
-  `).join('');
+function legendHTML(){
+  const exc = EXC_SYM.map(([c,l])=>`<div class="sym"><code>${c}</code>${l}</div>`).join('');
+  const loc = LOC_SYM.map(([c,l])=>`<div class="sym"><code>${c}</code>${l}</div>`).join('');
+  return `
+    <div class="legend-wrap">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div>
+          <div class="legend-title">Exception Symbols</div>
+          <div class="legend-col">${exc}</div>
+        </div>
+        <div>
+          <div class="legend-title">Location Symbols</div>
+          <div class="legend-col">${loc}</div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
-function renderInv(){
-  const container=g('inv-content');
-  const page=state.pages[state.currentPage];
+function pageHTML(page, pi, forPrint){
   const s=state.setup;
-  renderInvTabs();
-
+  const isCurrent = !forPrint && pi === state.currentPage;
   let html=`
-    <div class="sheet">
+    <div class="sheet" ${forPrint?`style="page-break-after:always;"`:''}>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:2px solid var(--text-hi);">
         <div style="font-size:11px;font-weight:700;">HOUSEHOLD GOODS DESCRIPTIVE INVENTORY</div>
         <div class="mono" style="font-size:11px;">Pg ${page.pageNum} / ${state.pages.length}</div>
@@ -692,7 +789,7 @@ function renderInv(){
         <div><div class="lbl">Tape Lot No</div><div style="font-size:14px;">${esc(s.tape)||'&nbsp;'}</div></div>
         <div><div class="lbl">Tape Color</div><div style="font-size:14px;">${esc(s.tColor)||'&nbsp;'}</div></div>
       </div>
-
+      ${legendHTML()}
       <table class="inv-table">
         <thead>
           <tr>
@@ -710,32 +807,30 @@ function renderInv(){
   `;
 
   page.items.forEach((it, idx)=>{
-    const isSrc=state.dupSource && state.dupSource.pi===state.currentPage && state.dupSource.ri===idx;
-    const imgs=it.images.map((img,i)=>`
-      <img src="${img}" class="thumb" onclick="showImg('${img}')" alt="">
-      <button class="btn-ghost" style="padding:0;width:12px;" onclick="delPhoto(${state.currentPage},${idx},${i})">
+    const isSrc = !forPrint && state.dupSource && state.dupSource.pi===pi && state.dupSource.ri===idx;
+    const imgs = it.images.map((img,i)=>`
+      <img src="${img}" class="thumb" ${forPrint?'':'onclick="showImg(\''+img+'\')"'} alt="">
+      ${forPrint?'':`<button class="btn-ghost" style="padding:0;width:12px;" onclick="delPhoto(${pi},${idx},${i})">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-      </button>
+      </button>`}
     `).join('');
 
     html+=`
       <tr>
-        <td class="row-num ${isSrc?'source':''}"
-          onpointerdown="rowPointerDown(event,${state.currentPage},${idx})"
-          onpointerup="rowPointerUp(event,${state.currentPage},${idx})">
+        <td class="row-num ${isSrc?'source':''}" ${forPrint?'':`onpointerdown="rowPointerDown(event,${pi},${idx})" onpointerup="rowPointerUp(event,${pi},${idx})"`}>
           ${it.itemNo}
         </td>
-        <td><input type="checkbox" ${it.check?'checked':''} onchange="updateItem(${state.currentPage},${idx},'check',this.checked)"></td>
-        <td><input type="text" value="${esc(it.carton)}" oninput="updateItem(${state.currentPage},${idx},'carton',this.value)"></td>
-        <td><input type="checkbox" ${it.cp?'checked':''} onchange="updateItem(${state.currentPage},${idx},'cp',this.checked)"></td>
-        <td><textarea rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';updateItem(${state.currentPage},${idx},'contents',this.value)">${esc(it.contents)}</textarea></td>
-        <td><input type="text" value="${esc(it.room)}" oninput="updateItem(${state.currentPage},${idx},'room',this.value)"></td>
-        <td><input type="checkbox" ${it.shipperCheck?'checked':''} onchange="updateItem(${state.currentPage},${idx},'shipperCheck',this.checked)"></td>
+        <td><input type="checkbox" ${it.check?'checked':''} ${forPrint?'disabled':`onchange="updateItem(${pi},${idx},'check',this.checked)"`}></td>
+        <td><input type="text" value="${esc(it.carton)}" ${forPrint?'readonly':`oninput="updateItem(${pi},${idx},'carton',this.value)"`}></td>
+        <td><input type="checkbox" ${it.cp?'checked':''} ${forPrint?'disabled':`onchange="updateItem(${pi},${idx},'cp',this.checked)"`}></td>
+        <td><textarea rows="1" ${forPrint?'readonly':`oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';updateItem(${pi},${idx},'contents',this.value)"`}>${esc(it.contents)}</textarea></td>
+        <td><input type="text" value="${esc(it.room)}" ${forPrint?'readonly':`oninput="updateItem(${pi},${idx},'room',this.value)"`}></td>
+        <td><input type="checkbox" ${it.shipperCheck?'checked':''} ${forPrint?'disabled':`onchange="updateItem(${pi},${idx},'shipperCheck',this.checked)"`}></td>
         <td class="photo-cell">
           ${imgs}
-          <button class="cam-btn" onclick="snapPhoto(${state.currentPage},${idx})">
+          ${forPrint?'':`<button class="cam-btn" onclick="snapPhoto(${pi},${idx})">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          </button>
+          </button>`}
         </td>
       </tr>
     `;
@@ -743,25 +838,30 @@ function renderInv(){
 
   html+=`</tbody></table>`;
 
-  if(state.dupSource){
+  if(!forPrint && isCurrent && state.dupSource){
     html+=`<div class="mt-2"><button class="btn btn-sm" onclick="cancelDup()">Cancel fill-down</button></div>`;
   }
 
   html+=`
     <div class="bottom-block">
       <div class="flex between items-center mb-1">
-        <div class="small">Total cartons counted: <span id="carton-total" class="mono">0</span></div>
-        <label class="small" style="display:flex;align-items:center;gap:4px;cursor:pointer;">
-          <input type="checkbox" id="prop-${state.currentPage}" ${page.propagate?'checked':''} onchange="state.pages[${state.currentPage}].propagate=this.checked; propagateSig(${state.currentPage});">
+        <div class="small">Total cartons counted: <span class="mono">${pageCartonTotal(page)}</span></div>
+        ${forPrint?'':`<label class="small" style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+          <input type="checkbox" id="prop-${pi}" ${page.propagate?'checked':''} onchange="state.pages[${pi}].propagate=this.checked; propagateSig(${pi});">
           Push-through signature
-        </label>
+        </label>`}
       </div>
 
       <div class="sig-row">
         <div class="sig-box">
           <div class="lbl">Driver / Owner — Origin</div>
-          <canvas id="sig-${state.currentPage}" class="sig-canvas"></canvas>
-          <div style="margin-top:4px;"><button class="btn btn-sm btn-ghost" onclick="clearSig(${state.currentPage})">Clear</button></div>
+          ${forPrint
+            ? `<div style="height:80px;border:1px solid var(--border);border-radius:2px;display:flex;align-items:center;justify-content:center;">
+                ${page.signature?`<img src="${page.signature}" style="max-width:100%;max-height:100%;">`:'<span style="color:var(--text-sec);font-size:12px;">No signature</span>'}
+               </div>`
+            : `<canvas id="sig-${pi}" class="sig-canvas"></canvas>
+               <div style="margin-top:4px;"><button class="btn btn-sm btn-ghost" onclick="clearSig(${pi})">Clear</button></div>`
+          }
         </div>
         <div class="sig-box">
           <div class="lbl">Driver / Owner — Destination</div>
@@ -780,9 +880,33 @@ function renderInv(){
     </div>
     </div>
   `;
+  return html;
+}
 
-  container.innerHTML=html;
-  updateCartonTotal();
+function pageCartonTotal(page){
+  let t=0;
+  page.items.forEach(it=>{
+    const m=String(it.carton).match(/^\s*(\d+(?:\.\d+)?)/);
+    if(m) t+=parseFloat(m[1]);
+  });
+  return t.toFixed(1).replace(/\.0$/,'');
+}
+
+function renderInvTabs(){
+  const el=g('inv-tabs'); if(!el) return;
+  el.innerHTML=state.pages.map((p,i)=>`
+    <button class="page-tab ${i===state.currentPage?'active':''}" onclick="switchPage(${i})">
+      Pg ${p.pageNum}/${state.pages.length}
+      ${state.pages.length>1?`<span style="margin-left:4px;opacity:0.5;" onclick="event.stopPropagation();removePage(${i})">×</span>`:''}
+    </button>
+  `).join('');
+}
+
+function renderInv(){
+  const container=g('inv-content');
+  const page=state.pages[state.currentPage];
+  renderInvTabs();
+  container.innerHTML = pageHTML(page, state.currentPage, false);
   requestAnimationFrame(()=>initSig(state.currentPage));
 }
 
@@ -795,6 +919,18 @@ function updateCartonTotal(){
   const el=g('carton-total'); if(el) el.textContent=t.toFixed(1).replace(/\.0$/,'');
 }
 
+/* ---------- PDF Export ---------- */
+function exportPDF(){
+  const stack=g('print-stack');
+  stack.innerHTML = state.pages.map((p,i)=>pageHTML(p,i,true)).join('');
+  toast('Preparing PDF...');
+  setTimeout(()=>{
+    window.print();
+    stack.innerHTML='';
+  }, 300);
+}
+
+/* ---------- Condition ---------- */
 function condPhoto(type, idx){
   const inp=document.createElement('input');
   inp.type='file'; inp.accept='image/*'; inp.capture='environment';

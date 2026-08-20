@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Digital Inventory & Damage Report</title>
+<title>Household Goods Descriptive Inventory</title>
 <style>
   :root {
     --bg: #ffffff;
     --surface: #f7f7f8;
     --surface-raised: #ffffff;
-    --border: #e4e4e7;
+    --border: #d4d4d8;
+    --border-light: #e4e4e7;
     --text-primary: #18181b;
-    --text-secondary: #71717a;
+    --text-secondary: #52525b;
     --text-tertiary: #a1a1aa;
     --danger: #dc2626;
-    --positive: #16a34a;
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 10px;
+    --accent: #2563eb;
+    --radius-sm: 4px;
+    --radius-md: 6px;
     --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
@@ -26,44 +26,46 @@
       --bg: #09090b;
       --surface: #18181b;
       --surface-raised: #27272a;
-      --border: #3f3f46;
+      --border: #52525b;
+      --border-light: #3f3f46;
       --text-primary: #fafafa;
-      --text-secondary: #a1a1aa;
+      --text-secondary: #d4d4d8;
       --text-tertiary: #71717a;
     }
   }
   * { box-sizing: border-box; }
   html, body {
-    margin: 0;
+    margin: 0; padding: 0;
     font-family: var(--font-sans);
     background: var(--bg);
     color: var(--text-primary);
-    padding: 12px;
-    line-height: 1.5;
     -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
   }
+  body { padding: 8px; font-size: 13px; line-height: 1.4; }
+
   .tabs {
     display: flex;
-    gap: 4px;
+    gap: 2px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     position: sticky;
     top: 0;
     background: var(--bg);
-    z-index: 10;
-    padding-top: 4px;
+    z-index: 20;
+    padding-top: 2px;
     overflow-x: auto;
   }
   .tab-btn {
-    padding: 10px 16px;
+    padding: 8px 12px;
     background: none;
     border: none;
     cursor: pointer;
     color: var(--text-secondary);
     font-weight: 500;
-    font-size: 14px;
+    font-size: 13px;
     border-bottom: 2px solid transparent;
-    transition: all 120ms ease-out;
+    transition: all 100ms ease-out;
     font-family: inherit;
     white-space: nowrap;
     flex-shrink: 0;
@@ -72,64 +74,266 @@
     color: var(--text-primary);
     border-bottom-color: var(--text-primary);
   }
-  .panel { display: none; }
+  .panel { display: none; padding-bottom: 40px; }
   .panel.active { display: block; }
 
-  .form-grid {
+  /* Paper-form header */
+  .form-header {
+    border: 2px solid var(--text-primary);
+    margin-bottom: 10px;
+    background: var(--bg);
+  }
+  .form-header-top {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px 16px;
+    grid-template-columns: 1fr auto auto;
+    gap: 0;
+    border-bottom: 2px solid var(--text-primary);
   }
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+  .form-header-top > div {
+    padding: 6px 10px;
+    border-right: 1px solid var(--border);
   }
-  .field label {
-    font-size: 12px;
+  .form-header-top > div:last-child { border-right: none; }
+  .form-header-mid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .form-header-mid > div {
+    padding: 6px 10px;
+    border-right: 1px solid var(--border);
+  }
+  .form-header-mid > div:last-child { border-right: none; }
+  .form-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
     color: var(--text-secondary);
-    font-weight: 500;
+    margin-bottom: 2px;
+    font-weight: 600;
   }
-  .field input,
-  .field select,
-  .field textarea {
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--surface-raised);
+  .form-header input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 14px;
     color: var(--text-primary);
-    font-size: 15px;
     font-family: inherit;
-    -webkit-appearance: none;
-    appearance: none;
+    padding: 2px 0;
   }
-  .field input:focus,
-  .field textarea:focus {
-    outline: none;
-    border-color: var(--text-primary);
+  .form-header input:focus { outline: none; }
+
+  /* Legend */
+  .legend-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 9px;
+    color: var(--text-secondary);
+  }
+  .legend-row > div {
+    padding: 4px 10px;
+    border-right: 1px solid var(--border);
+  }
+  .legend-row > div:last-child { border-right: none; }
+
+  /* Inventory grid - exact paper match */
+  .inv-sheet {
+    border: 2px solid var(--text-primary);
+    background: var(--bg);
+  }
+  .inv-grid-header {
+    display: grid;
+    grid-template-columns: 36px 32px 1fr 32px 2.2fr 70px 36px 44px;
+    gap: 0;
+    border-bottom: 2px solid var(--text-primary);
+    background: var(--surface);
+  }
+  .inv-grid-header > div {
+    padding: 5px 4px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+  }
+  .inv-grid-header > div:last-child { border-right: none; }
+
+  .inv-row {
+    display: grid;
+    grid-template-columns: 36px 32px 1fr 32px 2.2fr 70px 36px 44px;
+    gap: 0;
+    border-bottom: 1px solid var(--border-light);
+    min-height: 34px;
+  }
+  .inv-row:last-child { border-bottom: none; }
+  .inv-row > div {
+    border-right: 1px solid var(--border-light);
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .inv-row > div:last-child { border-right: none; }
+  .inv-row > div.wide { justify-content: flex-start; }
+
+  .inv-row input[type="text"],
+  .inv-row textarea {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: var(--text-primary);
+    font-family: inherit;
+    padding: 2px 4px;
+    resize: none;
+    line-height: 1.3;
+  }
+  .inv-row input:focus, .inv-row textarea:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    background: rgba(37,99,235,0.04);
+    z-index: 2;
+  }
+  .inv-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--text-primary);
+    cursor: pointer;
+  }
+  .row-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    user-select: none;
+    cursor: pointer;
+    position: relative;
+  }
+  .row-num.selected {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .row-num.target-hover {
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+  }
+  .row-num::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 100ms;
+  }
+  .row-num.selected::after { opacity: 1; }
+
+  .photo-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    flex-wrap: wrap;
+    padding: 2px;
+  }
+  .img-thumb {
+    width: 22px;
+    height: 22px;
+    object-fit: cover;
+    border-radius: 2px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+  }
+  .photo-btn {
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px dashed var(--border);
+    border-radius: 2px;
+    background: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    padding: 0;
   }
 
-  .page-tabs {
+  /* Bottom signature area */
+  .bottom-area {
+    border: 2px solid var(--text-primary);
+    border-top: none;
+    padding: 10px;
+  }
+  .sig-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .sig-box {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px;
+    background: var(--surface-raised);
+  }
+  .sig-box label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .sig-canvas {
+    width: 100%;
+    height: 80px;
+    display: block;
+    cursor: crosshair;
+    touch-action: none;
+    background: var(--bg);
+    border-radius: 2px;
+  }
+  .sig-actions {
     display: flex;
     gap: 6px;
+    margin-top: 4px;
+  }
+
+  .tape-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 8px;
+    font-size: 11px;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+  }
+
+  /* Page tabs */
+  .page-tabs {
+    display: flex;
+    gap: 4px;
     align-items: center;
     flex-wrap: wrap;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
   .page-tab {
-    padding: 8px 14px;
+    padding: 6px 12px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background: var(--surface);
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-primary);
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     font-family: inherit;
     font-weight: 500;
-    flex-shrink: 0;
   }
   .page-tab.active {
     background: var(--text-primary);
@@ -137,133 +341,40 @@
     border-color: var(--text-primary);
   }
 
-  .header-summary {
+  /* Condition sheet */
+  .cond-grid-header {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 12px;
-    padding: 12px;
+    grid-template-columns: 36px 100px 1fr 44px;
+    gap: 0;
+    border-bottom: 2px solid var(--text-primary);
     background: var(--surface);
-    border-radius: var(--radius-md);
-    line-height: 1.5;
   }
-  @media (min-width: 640px) {
-    .header-summary { grid-template-columns: repeat(4, 1fr); }
+  .cond-grid-header > div {
+    padding: 5px 4px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+    border-right: 1px solid var(--border);
   }
-
-  .inv-grid {
+  .cond-row {
     display: grid;
-    grid-template-columns: 44px 36px 1fr 36px 2fr 80px 36px 90px 36px;
-    gap: 1px;
-    background: var(--border);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    border: 1px solid var(--border);
-    margin-bottom: 12px;
+    grid-template-columns: 36px 100px 1fr 44px;
+    gap: 0;
+    border-bottom: 1px solid var(--border-light);
+    min-height: 34px;
   }
-  .inv-grid > div {
-    background: var(--surface-raised);
-    padding: 6px 8px;
-    font-size: 13px;
+  .cond-row > div {
+    border-right: 1px solid var(--border-light);
+    padding: 2px 4px;
     display: flex;
     align-items: center;
-    min-height: 40px;
-  }
-  .inv-grid .th {
-    background: var(--surface);
-    font-weight: 600;
-    font-size: 10px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-  }
-  .inv-grid input[type="text"],
-  .inv-grid input[type="number"],
-  .inv-grid textarea {
-    width: 100%;
-    border: none;
-    background: transparent;
-    font-size: 13px;
-    color: var(--text-primary);
-    padding: 4px;
-    font-family: inherit;
-    resize: none;
-  }
-  .inv-grid input:focus,
-  .inv-grid textarea:focus { outline: none; }
-  .inv-grid input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    accent-color: var(--text-primary);
-    cursor: pointer;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
-    background: var(--surface);
-    cursor: pointer;
-    font-size: 14px;
-    color: var(--text-primary);
-    font-family: inherit;
-    font-weight: 500;
-    transition: background 120ms ease-out;
-    touch-action: manipulation;
   }
-  .btn:hover { background: var(--surface-raised); }
-  .btn-primary {
-    background: var(--text-primary);
-    color: var(--bg);
-    border-color: var(--text-primary);
-  }
-  .btn-primary:hover {
-    background: var(--text-secondary);
-    border-color: var(--text-secondary);
-  }
-  .btn-ghost {
-    background: transparent;
-    border: none;
-    padding: 6px;
-    color: var(--text-secondary);
-  }
-  .btn-ghost:hover {
-    color: var(--text-primary);
-    background: var(--surface);
-  }
-  .btn-danger { color: var(--danger); }
-  .btn-danger:hover { background: rgba(220, 38, 38, 0.1); }
-  .btn-sm { padding: 6px 10px; font-size: 12px; }
+  .cond-row > div:last-child { border-right: none; }
+  .cond-row > div.wide { justify-content: flex-start; }
 
-  .sig-wrap {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--surface-raised);
-    position: relative;
-    margin-bottom: 8px;
-  }
-  .sig-canvas {
-    width: 100%;
-    height: 120px;
-    display: block;
-    cursor: crosshair;
-    touch-action: none;
-  }
-
-  .img-thumb {
-    width: 32px;
-    height: 32px;
-    object-fit: cover;
-    border-radius: 4px;
-    cursor: pointer;
-    border: 1px solid var(--border);
-  }
+  /* Overlay */
   .img-overlay {
     position: fixed;
     inset: 0;
@@ -278,160 +389,209 @@
   .img-overlay img {
     max-width: 100%;
     max-height: 100%;
-    border-radius: var(--radius-md);
+    border-radius: 4px;
     object-fit: contain;
   }
 
-  .damage-section { margin-bottom: 24px; }
-  .damage-section h3 {
-    font-size: 14px;
-    font-weight: 600;
-    margin: 0 0 10px;
-    color: var(--text-primary);
-  }
-  .damage-card {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 14px;
-    margin-bottom: 10px;
-    background: var(--surface-raised);
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-weight: 500;
+    touch-action: manipulation;
   }
-  .damage-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
+  .btn-primary {
+    background: var(--text-primary);
+    color: var(--bg);
+    border-color: var(--text-primary);
   }
-  @media (min-width: 640px) {
-    .damage-grid { grid-template-columns: 1fr 2fr; }
+  .btn-ghost {
+    background: transparent;
+    border: none;
+    padding: 4px;
+    color: var(--text-secondary);
   }
-  .damage-grid .field { margin: 0; }
-  .damage-grid textarea { min-height: 60px; }
+  .btn-sm { padding: 4px 8px; font-size: 11px; }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-primary);
+    color: var(--bg);
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 500;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 200ms;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
 
   .flex { display: flex; }
   .items-center { align-items: center; }
   .justify-between { justify-content: space-between; }
   .gap-1 { gap: 4px; }
-  .gap-2 { gap: 8px; }
-  .mt-2 { margin-top: 8px; }
-  .mt-3 { margin-top: 12px; }
+  .mb-1 { margin-bottom: 4px; }
   .mb-2 { margin-bottom: 8px; }
-  .mb-3 { margin-bottom: 12px; }
-  .text-sm { font-size: 12px; }
+  .text-sm { font-size: 11px; }
   .text-secondary { color: var(--text-secondary); }
-  .font-mono {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-  }
-  .row-actions {
-    opacity: 0;
-    transition: opacity 120ms ease-out;
-  }
-  .inv-row:hover .row-actions,
-  .inv-row:focus-within .row-actions,
-  .damage-card:hover .row-actions { opacity: 1; }
+  .font-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
-    background: var(--surface);
-    color: var(--text-secondary);
-    border: 1px solid var(--border);
-  }
-
-  .photo-strip {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .photo-strip .img-thumb { width: 28px; height: 28px; }
-  .photo-strip .btn-ghost { padding: 2px; }
-
-  @media (max-width: 640px) {
-    .form-grid { grid-template-columns: 1fr; }
-    .inv-grid { grid-template-columns: 36px 30px 1fr 30px 1.5fr 60px 30px 70px 30px; }
-    .inv-grid .th { font-size: 9px; padding: 4px; }
-    .inv-grid > div { padding: 4px; font-size: 12px; min-height: 36px; }
+  @media (min-width: 640px) {
+    body { padding: 16px; }
+    .inv-grid-header, .inv-row { grid-template-columns: 44px 36px 1fr 36px 2.5fr 90px 36px 52px; }
+    .cond-grid-header, .cond-row { grid-template-columns: 44px 140px 1fr 52px; }
   }
 </style>
 </head>
 <body>
 
-<div id="app">
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="setup" onclick="switchTab('setup')">Setup</button>
-    <button class="tab-btn" data-tab="inventory" onclick="switchTab('inventory')">Inventory</button>
-    <button class="tab-btn" data-tab="damage" onclick="switchTab('damage')">Damage report</button>
-  </div>
+<div class="tabs">
+  <button class="tab-btn active" data-tab="setup" onclick="switchTab('setup')">Setup</button>
+  <button class="tab-btn" data-tab="inventory" onclick="switchTab('inventory')">Inventory</button>
+  <button class="tab-btn" data-tab="premove" onclick="switchTab('premove')">Pre-move condition</button>
+  <button class="tab-btn" data-tab="postmove" onclick="switchTab('postmove')">Post-move condition</button>
+</div>
 
-  <div id="panel-setup" class="panel active">
-    <div class="form-grid">
-      <div class="field"><label>Shipper name</label><input id="s-name" oninput="updateSetup()"></div>
-      <div class="field"><label>Carrier reference no</label><input id="s-ref" oninput="updateSetup()"></div>
-      <div class="field"><label>Origin city</label><input id="s-ocity" oninput="updateSetup()"></div>
-      <div class="field"><label>Origin state</label><input id="s-ostate" oninput="updateSetup()"></div>
-      <div class="field"><label>Destination city</label><input id="s-dcity" oninput="updateSetup()"></div>
-      <div class="field"><label>Destination state</label><input id="s-dstate" oninput="updateSetup()"></div>
-      <div class="field"><label>Bill of lading no</label><input id="s-bol" oninput="updateSetup()"></div>
-      <div class="field"><label>Tape lot no</label><input id="s-tape" oninput="updateSetup()"></div>
-      <div class="field"><label>Tape color</label><input id="s-tcolor" oninput="updateSetup()"></div>
-      <div class="field"><label>Driver (origin)</label><input id="s-dorig" oninput="updateSetup()"></div>
-      <div class="field"><label>Date (origin)</label><input type="date" id="s-dorig-date" oninput="updateSetup()"></div>
-      <div class="field"><label>Driver (destination)</label><input id="s-ddest" oninput="updateSetup()"></div>
-      <div class="field"><label>Date (destination)</label><input type="date" id="s-ddest-date" oninput="updateSetup()"></div>
+<div id="panel-setup" class="panel active">
+  <div class="form-header">
+    <div class="form-header-top">
+      <div>
+        <div class="form-label">Shipper's Name</div>
+        <input id="s-name" placeholder="Kathleen Kerr" oninput="updateSetup()">
+      </div>
+      <div>
+        <div class="form-label">Carrier's Reference No</div>
+        <input id="s-ref" placeholder="485951" oninput="updateSetup()">
+      </div>
+      <div>
+        <div class="form-label">Bill of Lading No</div>
+        <input id="s-bol" oninput="updateSetup()">
+      </div>
+    </div>
+    <div class="form-header-mid">
+      <div>
+        <div class="form-label">Origin City, State</div>
+        <input id="s-origin" placeholder="Youngville, NC" oninput="updateSetup()">
+      </div>
+      <div>
+        <div class="form-label">Destination City, State</div>
+        <input id="s-dest" placeholder="Southington, CT" oninput="updateSetup()">
+      </div>
+      <div>
+        <div class="form-label">Tape Lot No</div>
+        <input id="s-tape" oninput="updateSetup()">
+      </div>
+      <div>
+        <div class="form-label">Tape Color</div>
+        <input id="s-tcolor" oninput="updateSetup()">
+      </div>
     </div>
   </div>
 
-  <div id="panel-inventory" class="panel">
-    <div class="flex items-center justify-between mb-2">
-      <div class="page-tabs" id="page-tabs"></div>
-      <button class="btn btn-sm" onclick="addInventoryPage()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12.0684 2.03418C12.5654 2.03421 12.9687 2.43755 12.9688 2.93457V11.0996H21.0654C21.5625 11.0996 21.9658 11.503 21.9658 12C21.9658 12.497 21.5625 12.9004 21.0654 12.9004H12.9688V21.0654C12.9687 21.5624 12.5654 21.9658 12.0684 21.9658C11.5713 21.9658 11.168 21.5625 11.168 21.0654V12.9004H2.93457C2.43751 12.9004 2.03418 12.4971 2.03418 12C2.03418 11.5029 2.43751 11.0996 2.93457 11.0996H11.168V2.93457C11.168 2.43751 11.5713 2.03418 12.0684 2.03418Z" fill="currentColor"/>
-        </svg>
-        Add page
-      </button>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+    <div class="field">
+      <label style="font-size:11px;color:var(--text-secondary);font-weight:600;">Driver (Origin)</label>
+      <input id="s-dorig" oninput="updateSetup()" style="padding:8px;border:1px solid var(--border);border-radius:4px;font-size:14px;">
     </div>
-    <div id="inventory-content"></div>
+    <div class="field">
+      <label style="font-size:11px;color:var(--text-secondary);font-weight:600;">Date (Origin)</label>
+      <input type="date" id="s-dorig-date" oninput="updateSetup()" style="padding:8px;border:1px solid var(--border);border-radius:4px;font-size:14px;">
+    </div>
+    <div class="field">
+      <label style="font-size:11px;color:var(--text-secondary);font-weight:600;">Driver (Destination)</label>
+      <input id="s-ddest" oninput="updateSetup()" style="padding:8px;border:1px solid var(--border);border-radius:4px;font-size:14px;">
+    </div>
+    <div class="field">
+      <label style="font-size:11px;color:var(--text-secondary);font-weight:600;">Date (Destination)</label>
+      <input type="date" id="s-ddest-date" oninput="updateSetup()" style="padding:8px;border:1px solid var(--border);border-radius:4px;font-size:14px;">
+    </div>
   </div>
+</div>
 
-  <div id="panel-damage" class="panel">
-    <div id="damage-content"></div>
+<div id="panel-inventory" class="panel">
+  <div class="flex items-center justify-between mb-2">
+    <div class="page-tabs" id="page-tabs"></div>
+    <button class="btn btn-sm" onclick="addPage()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Add page
+    </button>
   </div>
+  <div id="inventory-content"></div>
+</div>
+
+<div id="panel-premove" class="panel">
+  <div id="premove-content"></div>
+</div>
+
+<div id="panel-postmove" class="panel">
+  <div id="postmove-content"></div>
 </div>
 
 <div id="img-overlay" class="img-overlay" onclick="this.style.display='none'">
   <img id="img-overlay-img" src="" alt="">
 </div>
+<div id="toast" class="toast"></div>
 
 <script>
+const ROWS_PER_PAGE = 30;
+
 let state = {
   setup: {},
-  inventory: [{ pageNum: 1, items: [], signature: null, propagate: true }],
+  pages: [makePage(1)],
   currentPage: 0,
-  damage: { pre: [{loc:'',desc:'',imgs:[]}], post: [{loc:'',desc:'',imgs:[]}] }
+  premove: Array.from({length: 20}, () => ({loc:'', desc:'', imgs:[]})),
+  postmove: Array.from({length: 20}, () => ({loc:'', desc:'', imgs:[]})),
+  dupSource: null
 };
+
+function makePage(num) {
+  return {
+    pageNum: num,
+    items: Array.from({length: ROWS_PER_PAGE}, (_, i) => ({
+      itemNo: i + 1,
+      check: false,
+      carton: '',
+      cp: false,
+      contents: '',
+      room: '',
+      shipperCheck: false,
+      images: []
+    })),
+    signature: null,
+    propagate: true
+  };
+}
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
   if (tab === 'inventory') renderInventory();
-  if (tab === 'damage') renderDamage();
+  if (tab === 'premove') renderCondition('premove');
+  if (tab === 'postmove') renderCondition('postmove');
 }
 
 function updateSetup() {
   state.setup = {
     name: document.getElementById('s-name').value,
     ref: document.getElementById('s-ref').value,
-    oCity: document.getElementById('s-ocity').value,
-    oState: document.getElementById('s-ostate').value,
-    dCity: document.getElementById('s-dcity').value,
-    dState: document.getElementById('s-dstate').value,
     bol: document.getElementById('s-bol').value,
+    origin: document.getElementById('s-origin').value,
+    dest: document.getElementById('s-dest').value,
     tape: document.getElementById('s-tape').value,
     tColor: document.getElementById('s-tcolor').value,
     dOrig: document.getElementById('s-dorig').value,
@@ -439,17 +599,16 @@ function updateSetup() {
     dDest: document.getElementById('s-ddest').value,
     dDestDate: document.getElementById('s-ddest-date').value
   };
+  renderPageTabs();
 }
 
-function addInventoryPage() {
-  const prev = state.inventory[state.inventory.length - 1];
-  state.inventory.push({
-    pageNum: state.inventory.length + 1,
-    items: [],
-    signature: prev.propagate ? prev.signature : null,
-    propagate: true
-  });
-  state.currentPage = state.inventory.length - 1;
+function addPage() {
+  const prev = state.pages[state.pages.length - 1];
+  const p = makePage(state.pages.length + 1);
+  p.signature = prev.propagate ? prev.signature : null;
+  p.propagate = true;
+  state.pages.push(p);
+  state.currentPage = state.pages.length - 1;
   renderInventory();
 }
 
@@ -459,62 +618,88 @@ function switchPage(idx) {
 }
 
 function removePage(idx) {
-  if (state.inventory.length <= 1) return;
-  state.inventory.splice(idx, 1);
-  state.inventory.forEach((p, i) => p.pageNum = i + 1);
-  if (state.currentPage >= state.inventory.length) state.currentPage = state.inventory.length - 1;
+  if (state.pages.length <= 1) return;
+  state.pages.splice(idx, 1);
+  state.pages.forEach((p, i) => p.pageNum = i + 1);
+  if (state.currentPage >= state.pages.length) state.currentPage = state.pages.length - 1;
   renderInventory();
 }
 
-function addItem(pageIdx) {
-  const page = state.inventory[pageIdx];
-  const itemNo = page.items.length > 0 ? page.items[page.items.length - 1].itemNo + 1 : 1;
-  page.items.push({ itemNo, check: false, carton: '', cp: false, contents: '', room: '', shipperCheck: false, images: [] });
-  renderInventory();
-}
-
-function removeItem(pageIdx, itemIdx) {
-  state.inventory[pageIdx].items.splice(itemIdx, 1);
-  renderInventory();
-}
-
-function updateItem(pageIdx, itemIdx, field, value) {
-  state.inventory[pageIdx].items[itemIdx][field] = value;
+function updateItem(pageIdx, rowIdx, field, value) {
+  state.pages[pageIdx].items[rowIdx][field] = value;
   if (field === 'carton') updateCartonCount();
 }
 
 function updateCartonCount() {
   let total = 0;
-  state.inventory.forEach(p => {
+  state.pages.forEach(p => {
     p.items.forEach(it => {
-      const match = String(it.carton).match(/^\\s*(\\d+(?:\\.\\d+)?)/);
-      if (match) total += parseFloat(match[1]);
+      const m = String(it.carton).match(/^\\s*(\\d+(?:\\.\\d+)?)/);
+      if (m) total += parseFloat(m[1]);
     });
   });
   const el = document.getElementById('carton-count');
-  if (el) el.textContent = total;
+  if (el) el.textContent = total.toFixed(1).replace(/\\.0$/, '');
 }
 
-function triggerImage(pageIdx, itemIdx) {
+/* ---------- Duplicate / Fill-down ---------- */
+function startDup(pageIdx, rowIdx) {
+  state.dupSource = { pageIdx, rowIdx };
+  showToast('Tap another row to fill down to it');
+  renderInventory();
+}
+
+function cancelDup() {
+  state.dupSource = null;
+  renderInventory();
+}
+
+function applyDup(pageIdx, targetRowIdx) {
+  if (!state.dupSource) return;
+  const src = state.pages[state.dupSource.pageIdx].items[state.dupSource.rowIdx];
+  const start = Math.min(state.dupSource.rowIdx, targetRowIdx);
+  const end = Math.max(state.dupSource.rowIdx, targetRowIdx);
+  for (let i = start; i <= end; i++) {
+    if (i === state.dupSource.rowIdx) continue;
+    const it = state.pages[pageIdx].items[i];
+    it.carton = src.carton;
+    it.contents = src.contents;
+    it.room = src.room;
+    it.cp = src.cp;
+  }
+  state.dupSource = null;
+  renderInventory();
+  showToast('Filled down');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+/* ---------- Photos ---------- */
+function triggerImage(pageIdx, rowIdx) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
   input.capture = 'environment';
   input.onchange = e => {
     Array.from(e.target.files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = ev => {
-        state.inventory[pageIdx].items[itemIdx].images.push(ev.target.result);
+      const r = new FileReader();
+      r.onload = ev => {
+        state.pages[pageIdx].items[rowIdx].images.push(ev.target.result);
         renderInventory();
       };
-      reader.readAsDataURL(file);
+      r.readAsDataURL(file);
     });
   };
   input.click();
 }
 
-function removeImage(pageIdx, itemIdx, imgIdx) {
-  state.inventory[pageIdx].items[itemIdx].images.splice(imgIdx, 1);
+function removeImage(pageIdx, rowIdx, imgIdx) {
+  state.pages[pageIdx].items[rowIdx].images.splice(imgIdx, 1);
   renderInventory();
 }
 
@@ -523,7 +708,8 @@ function showImage(src) {
   document.getElementById('img-overlay').style.display = 'flex';
 }
 
-function initSignature(pageIdx) {
+/* ---------- Signature ---------- */
+function initSig(pageIdx) {
   const canvas = document.getElementById('sig-' + pageIdx);
   if (!canvas) return;
   const dpr = window.devicePixelRatio || 1;
@@ -532,40 +718,21 @@ function initSignature(pageIdx) {
   canvas.height = rect.height * dpr;
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 1.8;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  ctx.strokeStyle = getComputedStyle(document.body).color || '#000';
+  ctx.strokeStyle = getComputedStyle(document.body).color;
 
   let drawing = false;
-
   function getPos(e) {
     const r = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return { x: clientX - r.left, y: clientY - r.top };
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: cx - r.left, y: cy - r.top };
   }
-
-  function start(e) {
-    drawing = true;
-    const p = getPos(e);
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y);
-    e.preventDefault();
-  }
-  function move(e) {
-    if (!drawing) return;
-    const p = getPos(e);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-    e.preventDefault();
-  }
-  function end() {
-    drawing = false;
-    ctx.beginPath();
-    state.inventory[pageIdx].signature = canvas.toDataURL();
-    propagateSignature(pageIdx);
-  }
+  function start(e) { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }
+  function move(e) { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }
+  function end() { drawing = false; ctx.beginPath(); state.pages[pageIdx].signature = canvas.toDataURL(); propagateSig(pageIdx); }
 
   canvas.addEventListener('mousedown', start);
   canvas.addEventListener('mousemove', move);
@@ -575,258 +742,266 @@ function initSignature(pageIdx) {
   canvas.addEventListener('touchmove', move, {passive: false});
   canvas.addEventListener('touchend', end);
 
-  if (state.inventory[pageIdx].signature) {
+  if (state.pages[pageIdx].signature) {
     const img = new Image();
     img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
-    img.src = state.inventory[pageIdx].signature;
+    img.src = state.pages[pageIdx].signature;
   }
 }
 
-function clearSignature(pageIdx) {
-  state.inventory[pageIdx].signature = null;
-  const canvas = document.getElementById('sig-' + pageIdx);
-  if (canvas) {
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-  propagateSignature(pageIdx);
+function clearSig(pageIdx) {
+  state.pages[pageIdx].signature = null;
+  const c = document.getElementById('sig-' + pageIdx);
+  if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
+  propagateSig(pageIdx);
 }
 
-function propagateSignature(fromIdx) {
-  const sig = state.inventory[fromIdx].signature;
-  const propagate = document.getElementById('prop-' + fromIdx)?.checked ?? true;
+function propagateSig(fromIdx) {
+  const sig = state.pages[fromIdx].signature;
+  const el = document.getElementById('prop-' + fromIdx);
+  const propagate = el ? el.checked : true;
   if (!propagate || !sig) return;
-  for (let i = fromIdx + 1; i < state.inventory.length; i++) {
-    if (state.inventory[i].propagate) {
-      state.inventory[i].signature = sig;
-    }
+  for (let i = fromIdx + 1; i < state.pages.length; i++) {
+    if (state.pages[i].propagate) state.pages[i].signature = sig;
   }
   renderInventory();
 }
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+/* ---------- Rendering ---------- */
+function escapeHtml(t) {
+  const d = document.createElement('div');
+  d.textContent = t;
+  return d.innerHTML;
+}
+
+function renderPageTabs() {
+  const el = document.getElementById('page-tabs');
+  if (!el) return;
+  el.innerHTML = state.pages.map((p, i) => `
+    <button class="page-tab ${i === state.currentPage ? 'active' : ''}" onclick="switchPage(${i})">
+      Pg ${p.pageNum}/${state.pages.length}
+      ${state.pages.length > 1 ? `<span style="margin-left:4px;opacity:0.6;" onclick="event.stopPropagation();removePage(${i})">×</span>` : ''}
+    </button>
+  `).join('');
 }
 
 function renderInventory() {
   const container = document.getElementById('inventory-content');
-  const page = state.inventory[state.currentPage];
-  const tabsEl = document.getElementById('page-tabs');
-
-  tabsEl.innerHTML = state.inventory.map((p, i) => `
-    <button class="page-tab ${i === state.currentPage ? 'active' : ''}" onclick="switchPage(${i})">
-      Page ${p.pageNum}
-      ${state.inventory.length > 1 ? `
-      <span class="row-actions" style="margin-left:4px;display:inline-flex;" onclick="event.stopPropagation(); removePage(${i})">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M17.9542 4.77253C18.3056 4.42106 18.8761 4.42106 19.2276 4.77253C19.579 5.12401 19.579 5.69452 19.2276 6.04597L13.2735 12.0001L19.2276 17.9542C19.5791 18.3056 19.5791 18.8761 19.2276 19.2276C18.8761 19.5791 18.3056 19.5791 17.9542 19.2276L12.0001 13.2735L6.04595 19.2276C5.69451 19.5791 5.12399 19.579 4.77252 19.2276C4.42104 18.8761 4.42104 18.3056 4.77252 17.9542L10.7266 12.0001L4.77252 6.04595C4.42104 5.69451 4.42104 5.12399 4.77252 4.77252C5.12399 4.42104 5.69451 4.42104 6.04595 4.77252L12.0001 10.7266L17.9542 4.77253Z" fill="currentColor"/>
-        </svg>
-      </span>` : ''}
-    </button>
-  `).join('');
-
+  const page = state.pages[state.currentPage];
   const s = state.setup;
-  let html = `
-    <div class="header-summary">
-      <div><strong>${escapeHtml(s.name) || '—'}</strong><br>Shipper</div>
-      <div>${escapeHtml(s.oCity) || ''}${s.oState ? ', ' + escapeHtml(s.oState) : ''} → ${escapeHtml(s.dCity) || ''}${s.dState ? ', ' + escapeHtml(s.dState) : ''}<br>Route</div>
-      <div>Ref: ${escapeHtml(s.ref) || '—'}<br>BOL: ${escapeHtml(s.bol) || '—'}</div>
-      <div>Tape: ${escapeHtml(s.tape) || '—'}<br>Color: ${escapeHtml(s.tColor) || '—'}</div>
-    </div>
+  renderPageTabs();
 
-    <div class="flex items-center justify-between mb-2">
-      <div class="badge">Cartons: <span id="carton-count" class="font-mono">0</span></div>
-      <div class="flex items-center gap-2 text-sm text-secondary">
-        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
-          <input type="checkbox" id="prop-${state.currentPage}" ${page.propagate ? 'checked' : ''} onchange="state.inventory[${state.currentPage}].propagate=this.checked; propagateSignature(${state.currentPage});">
-          Push-through signature
-        </label>
+  let html = `
+    <div class="form-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:2px solid var(--text-primary);">
+        <div style="font-size:11px;font-weight:700;">NEW WORLD VAN LINES, INC. &nbsp;|&nbsp; HOUSEHOLD GOODS DESCRIPTIVE INVENTORY</div>
+        <div style="font-size:11px;font-weight:700;">Pg <span class="font-mono">${page.pageNum}</span> / <span class="font-mono">${state.pages.length}</span></div>
+      </div>
+      <div class="form-header-top">
+        <div><div class="form-label">Shipper's Name</div><div style="font-size:14px;">${escapeHtml(s.name) || '&nbsp;'}</div></div>
+        <div><div class="form-label">Carrier's Reference No</div><div style="font-size:14px;">${escapeHtml(s.ref) || '&nbsp;'}</div></div>
+        <div><div class="form-label">Bill of Lading No</div><div style="font-size:14px;">${escapeHtml(s.bol) || '&nbsp;'}</div></div>
+      </div>
+      <div class="form-header-mid">
+        <div><div class="form-label">Origin City, State</div><div style="font-size:14px;">${escapeHtml(s.origin) || '&nbsp;'}</div></div>
+        <div><div class="form-label">Destination City, State</div><div style="font-size:14px;">${escapeHtml(s.dest) || '&nbsp;'}</div></div>
+        <div><div class="form-label">Tape Lot No</div><div style="font-size:14px;">${escapeHtml(s.tape) || '&nbsp;'}</div></div>
+        <div><div class="form-label">Tape Color</div><div style="font-size:14px;">${escapeHtml(s.tColor) || '&nbsp;'}</div></div>
       </div>
     </div>
 
-    <div class="inv-grid">
-      <div class="th">Item</div>
-      <div class="th">Chk</div>
-      <div class="th">Carton / Article</div>
-      <div class="th">CP</div>
-      <div class="th">Contents / Condition</div>
-      <div class="th">Room</div>
-      <div class="th">Ship</div>
-      <div class="th">Photos</div>
-      <div class="th"></div>
+    <div class="flex items-center justify-between mb-1">
+      <div class="text-sm text-secondary">Cartons: <span id="carton-count" class="font-mono">0</span></div>
+      <label class="text-sm text-secondary" style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+        <input type="checkbox" id="prop-${state.currentPage}" ${page.propagate ? 'checked' : ''} onchange="state.pages[${state.currentPage}].propagate=this.checked; propagateSig(${state.currentPage});">
+        Push-through signature
+      </label>
+    </div>
+
+    <div class="inv-sheet">
+      <div class="inv-grid-header">
+        <div>Item<br>No</div>
+        <div>Chk</div>
+        <div>Carton Size<br>or Article</div>
+        <div>CP</div>
+        <div>Contents of Carton<br>or Condition of Article</div>
+        <div>Room</div>
+        <div>Ship<br>Chk</div>
+        <div>Photo</div>
+      </div>
   `;
 
   page.items.forEach((it, idx) => {
+    const isSource = state.dupSource && state.dupSource.pageIdx === state.currentPage && state.dupSource.rowIdx === idx;
     const imgs = it.images.map((img, i) => `
       <img src="${img}" class="img-thumb" onclick="showImage('${img}')" alt="">
-      <button class="btn-ghost row-actions" onclick="removeImage(${state.currentPage}, ${idx}, ${i})" title="Remove photo">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M17.9542 4.77253C18.3056 4.42106 18.8761 4.42106 19.2276 4.77253C19.579 5.12401 19.579 5.69452 19.2276 6.04597L13.2735 12.0001L19.2276 17.9542C19.5791 18.3056 19.5791 18.8761 19.2276 19.2276C18.8761 19.5791 18.3056 19.5791 17.9542 19.2276L12.0001 13.2735L6.04595 19.2276C5.69451 19.5791 5.12399 19.579 4.77252 19.2276C4.42104 18.8761 4.42104 18.3056 4.77252 17.9542L10.7266 12.0001L4.77252 6.04595C4.42104 5.69451 4.42104 5.12399 4.77252 4.77252C5.12399 4.42104 5.69451 4.42104 6.04595 4.77252L12.0001 10.7266L17.9542 4.77253Z" fill="currentColor"/>
-        </svg>
+      <button class="btn-ghost" style="padding:0;width:14px;height:14px;" onclick="removeImage(${state.currentPage},${idx},${i})">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
       </button>
     `).join('');
 
     html += `
-      <div class="inv-row font-mono">${it.itemNo}</div>
-      <div><input type="checkbox" ${it.check ? 'checked' : ''} onchange="updateItem(${state.currentPage}, ${idx}, 'check', this.checked)"></div>
-      <div><input type="text" value="${escapeHtml(it.carton)}" placeholder="e.g. 1.5 ctn" oninput="updateItem(${state.currentPage}, ${idx}, 'carton', this.value)"></div>
-      <div><input type="checkbox" ${it.cp ? 'checked' : ''} onchange="updateItem(${state.currentPage}, ${idx}, 'cp', this.checked)"></div>
-      <div><textarea rows="1" placeholder="Contents / condition" oninput="updateItem(${state.currentPage}, ${idx}, 'contents', this.value)">${escapeHtml(it.contents)}</textarea></div>
-      <div><input type="text" value="${escapeHtml(it.room)}" placeholder="Room" oninput="updateItem(${state.currentPage}, ${idx}, 'room', this.value)"></div>
-      <div><input type="checkbox" ${it.shipperCheck ? 'checked' : ''} onchange="updateItem(${state.currentPage}, ${idx}, 'shipperCheck', this.checked)"></div>
-      <div class="photo-strip">
-        ${imgs}
-        <button class="btn-ghost" onclick="triggerImage(${state.currentPage}, ${idx})" title="Add photo">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8.00916 7.50488C8.47326 7.50488 8.91828 7.68943 9.24646 8.01758C9.57465 8.34577 9.75916 8.79075 9.75916 9.25488C9.75916 9.71901 9.57465 10.164 9.24646 10.4922C8.91828 10.8203 8.47326 11.0049 8.00916 11.0049C7.54507 11.0049 7.10001 10.8203 6.77185 10.4922C6.4437 10.164 6.25916 9.71898 6.25916 9.25488C6.25916 8.79078 6.4437 8.34576 6.77185 8.01758C7.10001 7.68942 7.54507 7.50492 8.00916 7.50488Z" fill="currentColor"/>
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M17.8998 4.09961C20.0537 4.09961 21.8002 5.84609 21.8002 8V16C21.8002 18.1539 20.0537 19.9004 17.8998 19.9004H5.89978C3.74598 19.9003 1.99939 18.1538 1.99939 16V8C1.99939 5.84617 3.74598 4.09974 5.89978 4.09961H17.8998ZM15.4867 12.2539C15.448 12.2184 15.3885 12.2192 15.351 12.2559L11.7338 15.8027C11.0146 16.5079 9.87305 16.5222 9.13708 15.835L6.98669 13.8262C6.95049 13.7924 6.89516 13.791 6.85681 13.8223L3.82361 16.2988C3.96873 17.3168 4.84165 18.0995 5.89978 18.0996H17.8998C18.9375 18.0996 19.7964 17.3466 19.9662 16.3574L15.4867 12.2539ZM5.89978 5.90039C4.74009 5.90052 3.80017 6.84028 3.80017 8V14.002L5.73181 12.4238C6.46046 11.8286 7.51253 11.8634 8.20056 12.5059L10.351 14.5146C10.3897 14.5508 10.4498 14.5497 10.4877 14.5127L14.1049 10.9658C14.819 10.2656 15.9506 10.2466 16.6879 10.9219L19.9994 13.9551V8C19.9994 6.8402 19.0596 5.90039 17.8998 5.90039H5.89978Z" fill="currentColor"/>
-          </svg>
-        </button>
-      </div>
-      <div class="row-actions">
-        <button class="btn-ghost btn-danger" onclick="removeItem(${state.currentPage}, ${idx})" title="Remove row">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8.10001 3C8.10001 2.50294 8.50295 2.1 9.00001 2.1H15C15.4971 2.1 15.9 2.50294 15.9 3C15.9 3.49706 15.4971 3.9 15 3.9H9.00001C8.50295 3.9 8.10001 3.49706 8.10001 3Z" fill="currentColor"/>
-            <path d="M10 15.9C9.50295 15.9 9.10001 15.4971 9.10001 15L9.10001 10C9.10001 9.50294 9.50295 9.1 10 9.1C10.4971 9.1 10.9 9.50294 10.9 10L10.9 15C10.9 15.4971 10.4971 15.9 10 15.9Z" fill="currentColor"/>
-            <path d="M14 15.9C13.5029 15.9 13.1 15.4971 13.1 15V10C13.1 9.50294 13.5029 9.1 14 9.1C14.4971 9.1 14.9 9.50294 14.9 10V15C14.9 15.4971 14.4971 15.9 14 15.9Z" fill="currentColor"/>
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M5.1 5.00001C5.1 4.50295 5.50294 4.10001 6 4.10001H18C18.4971 4.10001 18.9 4.50295 18.9 5.00001C18.9 5.49707 18.4971 5.90001 18 5.90001H17.1V18C17.1 19.7123 15.7123 21.1 14 21.1H10C8.28772 21.1 6.9 19.7123 6.9 18V5.90001H6C5.50294 5.90001 5.1 5.49707 5.1 5.00001ZM8.7 18V5.90001H15.3V18C15.3 18.718 14.718 19.3 14 19.3H10C9.28203 19.3 8.7 18.718 8.7 18Z" fill="currentColor"/>
-          </svg>
-        </button>
+      <div class="inv-row">
+        <div class="row-num ${isSource ? 'selected' : ''}"
+          onpointerdown="handleRowPointerDown(event, ${state.currentPage}, ${idx})"
+          onpointerup="handleRowPointerUp(event, ${state.currentPage}, ${idx})">
+          ${it.itemNo}
+        </div>
+        <div><input type="checkbox" ${it.check ? 'checked' : ''} onchange="updateItem(${state.currentPage},${idx},'check',this.checked)"></div>
+        <div class="wide"><input type="text" value="${escapeHtml(it.carton)}" oninput="updateItem(${state.currentPage},${idx},'carton',this.value)" placeholder="3.0 ctn"></div>
+        <div><input type="checkbox" ${it.cp ? 'checked' : ''} onchange="updateItem(${state.currentPage},${idx},'cp',this.checked)"></div>
+        <div class="wide"><textarea rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';updateItem(${state.currentPage},${idx},'contents',this.value)" placeholder="Decor, dishes...">${escapeHtml(it.contents)}</textarea></div>
+        <div class="wide"><input type="text" value="${escapeHtml(it.room)}" oninput="updateItem(${state.currentPage},${idx},'room',this.value)" placeholder="LR"></div>
+        <div><input type="checkbox" ${it.shipperCheck ? 'checked' : ''} onchange="updateItem(${state.currentPage},${idx},'shipperCheck',this.checked)"></div>
+        <div class="photo-cell">
+          ${imgs}
+          <button class="photo-btn" onclick="triggerImage(${state.currentPage},${idx})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
       </div>
     `;
   });
 
   html += `</div>`;
 
-  html += `
-    <button class="btn btn-primary mt-2" onclick="addItem(${state.currentPage})">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12.0684 2.03418C12.5654 2.03421 12.9687 2.43755 12.9688 2.93457V11.0996H21.0654C21.5625 11.0996 21.9658 11.503 21.9658 12C21.9658 12.497 21.5625 12.9004 21.0654 12.9004H12.9688V21.0654C12.9687 21.5624 12.5654 21.9658 12.0684 21.9658C11.5713 21.9658 11.168 21.5625 11.168 21.0654V12.9004H2.93457C2.43751 12.9004 2.03418 12.4971 2.03418 12C2.03418 11.5029 2.43751 11.0996 2.93457 11.0996H11.168V2.93457C11.168 2.43751 11.5713 2.03418 12.0684 2.03418Z" fill="currentColor"/>
-      </svg>
-      Add item
-    </button>
+  if (state.dupSource) {
+    html += `<div class="mb-2 mt-2"><button class="btn btn-sm" onclick="cancelDup()">Cancel fill-down</button></div>`;
+  }
 
-    <div class="mt-3">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-sm text-secondary">Signature (tap or drag to sign)</span>
-        <div class="flex gap-1">
-          <button class="btn btn-sm btn-ghost" onclick="clearSignature(${state.currentPage})">Clear</button>
+  html += `
+    <div class="bottom-area">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Remarks / Exceptions</div>
+      <textarea style="width:100%;min-height:50px;border:1px solid var(--border);border-radius:4px;padding:6px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text-primary);resize:vertical;" placeholder="Enter any remarks..."></textarea>
+
+      <div class="sig-grid">
+        <div class="sig-box">
+          <label>Driver / Owner — Origin</label>
+          <canvas id="sig-${state.currentPage}" class="sig-canvas"></canvas>
+          <div class="sig-actions">
+            <button class="btn btn-sm btn-ghost" onclick="clearSig(${state.currentPage})">Clear</button>
+          </div>
+        </div>
+        <div class="sig-box">
+          <label>Driver / Owner — Destination</label>
+          <div style="height:80px;border:1px dashed var(--border);border-radius:2px;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);font-size:12px;">
+            Signed at destination
+          </div>
         </div>
       </div>
-      <div class="sig-wrap">
-        <canvas id="sig-${state.currentPage}" class="sig-canvas"></canvas>
+
+      <div class="tape-info">
+        <div><span class="form-label">Driver (Origin)</span><div>${escapeHtml(s.dOrig) || '—'}</div></div>
+        <div><span class="form-label">Date</span><div>${escapeHtml(s.dOrigDate) || '—'}</div></div>
+        <div><span class="form-label">Driver (Dest)</span><div>${escapeHtml(s.dDest) || '—'}</div></div>
+        <div><span class="form-label">Date</span><div>${escapeHtml(s.dDestDate) || '—'}</div></div>
       </div>
     </div>
   `;
 
   container.innerHTML = html;
   updateCartonCount();
-
-  requestAnimationFrame(() => initSignature(state.currentPage));
+  requestAnimationFrame(() => initSig(state.currentPage));
 }
 
-function renderDamage() {
-  const container = document.getElementById('damage-content');
-  const s = state.setup;
-  let html = `
-    <div class="header-summary">
-      <div><strong>${escapeHtml(s.name) || '—'}</strong><br>Shipper</div>
-      <div>${escapeHtml(s.oCity) || ''}${s.oState ? ', ' + escapeHtml(s.oState) : ''} → ${escapeHtml(s.dCity) || ''}${s.dState ? ', ' + escapeHtml(s.dState) : ''}<br>Route</div>
-      <div>Ref: ${escapeHtml(s.ref) || '—'}<br>BOL: ${escapeHtml(s.bol) || '—'}</div>
-      <div>Tape: ${escapeHtml(s.tape) || '—'}<br>Color: ${escapeHtml(s.tColor) || '—'}</div>
-    </div>
-  `;
+/* Pointer handling for long-press row duplicate */
+let longPressTimer = null;
+let longPressFired = false;
 
-  ['pre', 'post'].forEach(type => {
-    const label = type === 'pre' ? 'Pre-existing damage (origin)' : 'Post-move damage (destination)';
-    const list = state.damage[type];
-    html += `<div class="damage-section"><h3>${label}</h3>`;
-    list.forEach((d, idx) => {
-      const imgs = d.imgs.map((img, i) => `
-        <img src="${img}" class="img-thumb" onclick="showImage('${img}')" alt="">
-        <button class="btn-ghost row-actions" onclick="removeDamageImage('${type}', ${idx}, ${i})">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17.9542 4.77253C18.3056 4.42106 18.8761 4.42106 19.2276 4.77253C19.579 5.12401 19.579 5.69452 19.2276 6.04597L13.2735 12.0001L19.2276 17.9542C19.5791 18.3056 19.5791 18.8761 19.2276 19.2276C18.8761 19.5791 18.3056 19.5791 17.9542 19.2276L12.0001 13.2735L6.04595 19.2276C5.69451 19.5791 5.12399 19.579 4.77252 19.2276C4.42104 18.8761 4.42104 18.3056 4.77252 17.9542L10.7266 12.0001L4.77252 6.04595C4.42104 5.69451 4.42104 5.12399 4.77252 4.77252C5.12399 4.42104 5.69451 4.42104 6.04595 4.77252L12.0001 10.7266L17.9542 4.77253Z" fill="currentColor"/>
-          </svg>
-        </button>
-      `).join('');
-
-      html += `
-        <div class="damage-card">
-          <div class="damage-grid">
-            <div class="field">
-              <label>Location</label>
-              <input type="text" value="${escapeHtml(d.loc)}" oninput="state.damage['${type}'][${idx}].loc=this.value" placeholder="Room / area">
-            </div>
-            <div class="field">
-              <label>Description</label>
-              <textarea oninput="state.damage['${type}'][${idx}].desc=this.value" placeholder="Describe damage">${escapeHtml(d.desc)}</textarea>
-            </div>
-          </div>
-          <div class="mt-2 flex items-center gap-2">
-            <div class="photo-strip">${imgs}</div>
-            <button class="btn btn-sm btn-ghost" onclick="triggerDamageImage('${type}', ${idx})">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8.00916 7.50488C8.47326 7.50488 8.91828 7.68943 9.24646 8.01758C9.57465 8.34577 9.75916 8.79075 9.75916 9.25488C9.75916 9.71901 9.57465 10.164 9.24646 10.4922C8.91828 10.8203 8.47326 11.0049 8.00916 11.0049C7.54507 11.0049 7.10001 10.8203 6.77185 10.4922C6.4437 10.164 6.25916 9.71898 6.25916 9.25488C6.25916 8.79078 6.4437 8.34576 6.77185 8.01758C7.10001 7.68942 7.54507 7.50492 8.00916 7.50488Z" fill="currentColor"/>
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M17.8998 4.09961C20.0537 4.09961 21.8002 5.84609 21.8002 8V16C21.8002 18.1539 20.0537 19.9004 17.8998 19.9004H5.89978C3.74598 19.9003 1.99939 18.1538 1.99939 16V8C1.99939 5.84617 3.74598 4.09974 5.89978 4.09961H17.8998ZM15.4867 12.2539C15.448 12.2184 15.3885 12.2192 15.351 12.2559L11.7338 15.8027C11.0146 16.5079 9.87305 16.5222 9.13708 15.835L6.98669 13.8262C6.95049 13.7924 6.89516 13.791 6.85681 13.8223L3.82361 16.2988C3.96873 17.3168 4.84165 18.0995 5.89978 18.0996H17.8998C18.9375 18.0996 19.7964 17.3466 19.9662 16.3574L15.4867 12.2539ZM5.89978 5.90039C4.74009 5.90052 3.80017 6.84028 3.80017 8V14.002L5.73181 12.4238C6.46046 11.8286 7.51253 11.8634 8.20056 12.5059L10.351 14.5146C10.3897 14.5508 10.4498 14.5497 10.4877 14.5127L14.1049 10.9658C14.819 10.2656 15.9506 10.2466 16.6879 10.9219L19.9994 13.9551V8C19.9994 6.8402 19.0596 5.90039 17.8998 5.90039H5.89978Z" fill="currentColor"/>
-              </svg>
-              Photo
-            </button>
-            <span class="row-actions">
-              <button class="btn btn-sm btn-ghost btn-danger" onclick="removeDamage('${type}', ${idx})">Remove</button>
-            </span>
-          </div>
-        </div>
-      `;
-    });
-    html += `<button class="btn btn-sm" onclick="addDamage('${type}')">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12.0684 2.03418C12.5654 2.03421 12.9687 2.43755 12.9688 2.93457V11.0996H21.0654C21.5625 11.0996 21.9658 11.503 21.9658 12C21.9658 12.497 21.5625 12.9004 21.0654 12.9004H12.9688V21.0654C12.9687 21.5624 12.5654 21.9658 12.0684 21.9658C11.5713 21.9658 11.168 21.5625 11.168 21.0654V12.9004H2.93457C2.43751 12.9004 2.03418 12.4971 2.03418 12C2.03418 11.5029 2.43751 11.0996 2.93457 11.0996H11.168V2.93457C11.168 2.43751 11.5713 2.03418 12.0684 2.03418Z" fill="currentColor"/>
-      </svg>
-      Add damage entry
-    </button></div>`;
-  });
-
-  container.innerHTML = html;
+function handleRowPointerDown(e, pageIdx, rowIdx) {
+  if (e.button !== 0) return;
+  longPressFired = false;
+  longPressTimer = setTimeout(() => {
+    longPressFired = true;
+    startDup(pageIdx, rowIdx);
+  }, 500);
 }
 
-function addDamage(type) {
-  state.damage[type].push({loc:'',desc:'',imgs:[]});
-  renderDamage();
+function handleRowPointerUp(e, pageIdx, rowIdx) {
+  clearTimeout(longPressTimer);
+  if (longPressFired) {
+    e.preventDefault();
+    return;
+  }
+  if (state.dupSource) {
+    if (state.dupSource.pageIdx === pageIdx && state.dupSource.rowIdx !== rowIdx) {
+      applyDup(pageIdx, rowIdx);
+    }
+  }
 }
 
-function removeDamage(type, idx) {
-  state.damage[type].splice(idx, 1);
-  renderDamage();
-}
-
-function triggerDamageImage(type, idx) {
+/* ---------- Condition sheets ---------- */
+function triggerCondImage(type, idx) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
   input.capture = 'environment';
   input.onchange = e => {
     Array.from(e.target.files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = ev => {
-        state.damage[type][idx].imgs.push(ev.target.result);
-        renderDamage();
-      };
-      reader.readAsDataURL(file);
+      const r = new FileReader();
+      r.onload = ev => { state[type][idx].imgs.push(ev.target.result); renderCondition(type); };
+      r.readAsDataURL(file);
     });
   };
   input.click();
 }
+function removeCondImage(type, idx, i) { state[type][idx].imgs.splice(i, 1); renderCondition(type); }
 
-function removeDamageImage(type, idx, imgIdx) {
-  state.damage[type][idx].imgs.splice(imgIdx, 1);
-  renderDamage();
+function renderCondition(type) {
+  const container = document.getElementById(type + '-content');
+  const s = state.setup;
+  const list = state[type];
+
+  let html = `
+    <div class="form-header" style="margin-bottom:10px;">
+      <div style="padding:6px 10px;border-bottom:2px solid var(--text-primary);font-size:11px;font-weight:700;text-transform:uppercase;">
+        ${type === 'premove' ? 'Pre-move Condition Report' : 'Post-move Condition Report'}
+      </div>
+      <div class="form-header-top">
+        <div><div class="form-label">Shipper's Name</div><div style="font-size:14px;">${escapeHtml(s.name) || '&nbsp;'}</div></div>
+        <div><div class="form-label">Reference No</div><div style="font-size:14px;">${escapeHtml(s.ref) || '&nbsp;'}</div></div>
+        <div><div class="form-label">Date</div><div style="font-size:14px;">${escapeHtml(type==='premove'?s.dOrigDate:s.dDestDate) || '&nbsp;'}</div></div>
+      </div>
+    </div>
+
+    <div class="inv-sheet">
+      <div class="cond-grid-header">
+        <div>No</div>
+        <div>Location / Room</div>
+        <div>Condition Description</div>
+        <div>Photos</div>
+      </div>
+  `;
+
+  list.forEach((it, idx) => {
+    const imgs = it.imgs.map((img, i) => `
+      <img src="${img}" class="img-thumb" onclick="showImage('${img}')" alt="">
+      <button class="btn-ghost" style="padding:0;width:14px;height:14px;" onclick="removeCondImage('${type}',${idx},${i})">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+      </button>
+    `).join('');
+
+    html += `
+      <div class="cond-row">
+        <div class="font-mono" style="color:var(--text-tertiary);font-size:11px;">${idx+1}</div>
+        <div class="wide"><input type="text" value="${escapeHtml(it.loc)}" oninput="state.${type}[${idx}].loc=this.value" placeholder="Living room"></div>
+        <div class="wide"><textarea rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';state.${type}[${idx}].desc=this.value" placeholder="Scuff mark on baseboard...">${escapeHtml(it.desc)}</textarea></div>
+        <div class="photo-cell">
+          ${imgs}
+          <button class="photo-btn" onclick="triggerCondImage('${type}',${idx})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
 }
 
 window.addEventListener('resize', () => {
-  if (state.inventory[state.currentPage]) initSignature(state.currentPage);
+  if (state.pages[state.currentPage]) initSig(state.currentPage);
 });
 </script>
 </body>

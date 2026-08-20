@@ -1,700 +1,345 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Digital Inventory & Damage Report</title>
-<style>
-  :root {
-    --bg: #ffffff;
-    --surface: #f7f7f8;
-    --surface-raised: #ffffff;
-    --border: #e4e4e7;
-    --text-primary: #18181b;
-    --text-secondary: #71717a;
-    --text-tertiary: #a1a1aa;
-    --danger: #dc2626;
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 10px;
-    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #09090b;
-      --surface: #18181b;
-      --surface-raised: #27272a;
-      --border: #3f3f46;
-      --text-primary: #fafafa;
-      --text-secondary: #a1a1aa;
-      --text-tertiary: #71717a;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Household Goods Descriptive Inventory</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; padding: 0; }
+      .page-break { page-break-after: always; }
+      .print-shadow-none { box-shadow: none !important; border: 1px solid #000 !important; }
     }
-  }
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0;
-    font-family: var(--font-sans);
-    background: var(--bg);
-    color: var(--text-primary);
-    padding: 12px;
-    line-height: 1.5;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .tabs {
-    display: flex;
-    gap: 4px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-    z-index: 10;
-    padding-top: 4px;
-    overflow-x: auto;
-  }
-  .tab-btn {
-    padding: 10px 16px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-secondary);
-    font-weight: 500;
-    font-size: 14px;
-    border-bottom: 2px solid transparent;
-    transition: all 120ms ease-out;
-    font-family: inherit;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .tab-btn.active {
-    color: var(--text-primary);
-    border-bottom-color: var(--text-primary);
-  }
-  .panel { display: none; }
-  .panel.active { display: block; }
-
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px 16px;
-  }
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .field label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
-  .field input, .field select, .field textarea {
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--surface-raised);
-    color: var(--text-primary);
-    font-size: 15px;
-    font-family: inherit;
-  }
-  .field input:focus, .field textarea:focus {
-    outline: none;
-    border-color: var(--text-primary);
-  }
-
-  .page-tabs {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-  }
-  .page-tab {
-    padding: 8px 14px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: var(--surface);
-    cursor: pointer;
-    font-size: 13px;
-    color: var(--text-primary);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: inherit;
-    font-weight: 500;
-    flex-shrink: 0;
-  }
-  .page-tab.active {
-    background: var(--text-primary);
-    color: var(--bg);
-    border-color: var(--text-primary);
-  }
-
-  .header-summary {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 12px;
-    padding: 12px;
-    background: var(--surface);
-    border-radius: var(--radius-md);
-    line-height: 1.5;
-  }
-  @media (min-width: 640px) {
-    .header-summary { grid-template-columns: repeat(4, 1fr); }
-  }
-
-  .table-responsive {
-    width: 100%;
-    overflow-x: auto;
-    margin-bottom: 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-  }
-  table.inv-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 700px;
-    background: var(--surface-raised);
-  }
-  table.inv-table th {
-    background: var(--surface);
-    font-weight: 600;
-    font-size: 11px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    padding: 8px;
-    border-bottom: 1px solid var(--border);
-    text-align: left;
-  }
-  table.inv-table td {
-    padding: 6px 8px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-    font-size: 13px;
-  }
-  table.inv-table tr:last-child td { border-bottom: none; }
-  table.inv-table input[type="text"],
-  table.inv-table input[type="number"] {
-    width: 100%;
-    border: 1px solid transparent;
-    background: transparent;
-    font-size: 13px;
-    color: var(--text-primary);
-    padding: 4px;
-    border-radius: 4px;
-  }
-  table.inv-table input[type="text"]:focus,
-  table.inv-table input[type="number"]:focus {
-    outline: none;
-    background: var(--bg);
-    border-color: var(--border);
-  }
-  table.inv-table input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--text-primary);
-    cursor: pointer;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
-    background: var(--surface);
-    cursor: pointer;
-    font-size: 14px;
-    color: var(--text-primary);
-    font-family: inherit;
-    font-weight: 500;
-    touch-action: manipulation;
-  }
-  .btn-primary {
-    background: var(--text-primary);
-    color: var(--bg);
-    border-color: var(--text-primary);
-  }
-  .btn-ghost {
-    background: transparent;
-    border: none;
-    padding: 4px;
-    color: var(--text-secondary);
-  }
-  .btn-danger { color: var(--danger); }
-  .btn-sm { padding: 6px 10px; font-size: 12px; }
-
-  .sig-wrap {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--surface-raised);
-    position: relative;
-    margin-bottom: 8px;
-    max-width: 400px;
-  }
-  .sig-canvas {
-    width: 100%;
-    height: 120px;
-    display: block;
-    cursor: crosshair;
-    touch-action: none;
-  }
-
-  .img-thumb {
-    width: 32px;
-    height: 32px;
-    object-fit: cover;
-    border-radius: 4px;
-    cursor: pointer;
-    border: 1px solid var(--border);
-  }
-  .img-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.9);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    padding: 16px;
-  }
-  .img-overlay img {
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: var(--radius-md);
-    object-fit: contain;
-  }
-
-  .damage-section { margin-bottom: 24px; }
-  .damage-section h3 {
-    font-size: 14px;
-    font-weight: 600;
-    margin: 0 0 10px;
-  }
-  .damage-card {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 14px;
-    margin-bottom: 10px;
-    background: var(--surface-raised);
-  }
-
-  .flex { display: flex; }
-  .items-center { align-items: center; }
-  .justify-between { justify-content: space-between; }
-  .gap-1 { gap: 4px; }
-  .gap-2 { gap: 8px; }
-  .mt-2 { margin-top: 8px; }
-  .mb-2 { margin-bottom: 8px; }
-  .text-secondary { color: var(--text-secondary); }
-  .photo-strip { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
-
-  @media (max-width: 640px) {
-    .form-grid { grid-template-columns: 1fr; }
-  }
-</style>
+  </style>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-900 font-sans min-h-screen">
+  <div id="root"></div>
 
-<div id="app">
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="setup" onclick="switchTab('setup')">Setup</button>
-    <button class="tab-btn" data-tab="inventory" onclick="switchTab('inventory')">Inventory</button>
-    <button class="tab-btn" data-tab="damage" onclick="switchTab('damage')">Damage report</button>
-  </div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-  <div id="panel-setup" class="panel active">
-    <div class="form-grid">
-      <div class="field"><label>Shipper name</label><input id="s-name" oninput="updateSetup()"></div>
-      <div class="field"><label>Carrier reference no</label><input id="s-ref" oninput="updateSetup()"></div>
-      <div class="field"><label>Origin city</label><input id="s-ocity" oninput="updateSetup()"></div>
-      <div class="field"><label>Origin state</label><input id="s-ostate" oninput="updateSetup()"></div>
-      <div class="field"><label>Destination city</label><input id="s-dcity" oninput="updateSetup()"></div>
-      <div class="field"><label>Destination state</label><input id="s-dstate" oninput="updateSetup()"></div>
-      <div class="field"><label>Bill of lading no</label><input id="s-bol" oninput="updateSetup()"></div>
-      <div class="field"><label>Tape lot no</label><input id="s-tape" oninput="updateSetup()"></div>
-      <div class="field"><label>Tape color</label><input id="s-tcolor" oninput="updateSetup()"></div>
-      <div class="field"><label>Driver (origin)</label><input id="s-dorig" oninput="updateSetup()"></div>
-      <div class="field"><label>Date (origin)</label><input type="date" id="s-dorig-date" oninput="updateSetup()"></div>
-      <div class="field"><label>Driver (destination)</label><input id="s-ddest" oninput="updateSetup()"></div>
-      <div class="field"><label>Date (destination)</label><input type="date" id="s-ddest-date" oninput="updateSetup()"></div>
-    </div>
-  </div>
+    const ITEMS_PER_PAGE = 25;
 
-  <div id="panel-inventory" class="panel">
-    <div class="flex items-center justify-between mb-2">
-      <div class="page-tabs" id="page-tabs"></div>
-      <button class="btn btn-sm" onclick="addInventoryPage()">+ Add page</button>
-    </div>
-    <div id="inventory-content"></div>
-  </div>
+    function InventoryApp() {
+      // Global Shared Header State
+      const [header, setHeader] = useState({
+        shipperName: '',
+        origin: '',
+        destination: '',
+        carrierRef: '',
+        billOfLading: '',
+        tapeLotNo: '',
+        tapeColor: '',
+        tapeNosFrom: '',
+        tapeNosThru: ''
+      });
 
-  <div id="panel-damage" class="panel">
-    <div id="damage-content"></div>
-  </div>
-</div>
+      // Signature States
+      const [driverSig, setDriverSig] = useState(null);
+      const [ownerSig, setOwnerSig] = useState(null);
+      const [activeSigModal, setActiveSigModal] = useState(null);
 
-<div id="img-overlay" class="img-overlay" onclick="this.style.display='none'">
-  <img id="img-overlay-img" src="" alt="">
-</div>
+      // Inventory Data
+      const [items, setItems] = useState(() => {
+        return Array.from({ length: 25 }, (_, i) => ({
+          id: i + 1,
+          article: '',
+          cp: false,
+          contents: '',
+          room: ''
+        }));
+      });
 
-<script>
-let state = {
-  setup: { name: '', ref: '', oCity: '', oState: '', dCity: '', dState: '', bol: '', tape: '', tColor: '', dOrig: '', dOrigDate: '', dDest: '', dDestDate: '' },
-  inventory: [{ pageNum: 1, items: [{ itemNo: 1, check: false, carton: '', cp: false, contents: '', room: '', shipperCheck: false, images: [] }], signature: null, propagate: true }],
-  currentPage: 0,
-  damage: {
-    pre: [{ loc: '', desc: '', imgs: [] }],
-    post: [{ loc: '', desc: '', imgs: [] }]
-  }
-};
+      // Signature Pad Canvas References
+      const sigCanvasRef = useRef(null);
+      const sigPadInstance = useRef(null);
 
-function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
-  if (tab === 'inventory') renderInventory();
-  if (tab === 'damage') renderDamage();
-}
+      useEffect(() => {
+        if (activeSigModal && sigCanvasRef.current) {
+          sigPadInstance.current = new SignaturePad(sigCanvasRef.current, {
+            backgroundColor: 'rgb(255, 255, 255)'
+          });
+        }
+      }, [activeSigModal]);
 
-function updateSetup() {
-  state.setup = {
-    name: document.getElementById('s-name').value,
-    ref: document.getElementById('s-ref').value,
-    oCity: document.getElementById('s-ocity').value,
-    oState: document.getElementById('s-ostate').value,
-    dCity: document.getElementById('s-dcity').value,
-    dState: document.getElementById('s-dstate').value,
-    bol: document.getElementById('s-bol').value,
-    tape: document.getElementById('s-tape').value,
-    tColor: document.getElementById('s-tcolor').value,
-    dOrig: document.getElementById('s-dorig').value,
-    dOrigDate: document.getElementById('s-dorig-date').value,
-    dDest: document.getElementById('s-ddest').value,
-    dDestDate: document.getElementById('s-ddest-date').value
-  };
-}
+      // Dynamic Auto-Calculations
+      const totalPages = Math.max(1, Math.ceil(items.length / ITEMS_PER_PAGE));
+      const totalCartons = items.filter(item => item.article.trim() !== '' || item.cp).length;
 
-function addInventoryPage() {
-  const prev = state.inventory[state.inventory.length - 1];
-  const nextSig = (prev && prev.propagate) ? prev.signature : null;
-  state.inventory.push({
-    pageNum: state.inventory.length + 1,
-    items: [{ itemNo: 1, check: false, carton: '', cp: false, contents: '', room: '', shipperCheck: false, images: [] }],
-    signature: nextSig,
-    propagate: true
-  });
-  state.currentPage = state.inventory.length - 1;
-  renderInventory();
-}
-
-function switchPage(idx) {
-  state.currentPage = idx;
-  renderInventory();
-}
-
-function removePage(idx) {
-  if (state.inventory.length <= 1) return;
-  state.inventory.splice(idx, 1);
-  state.inventory.forEach((p, i) => p.pageNum = i + 1);
-  if (state.currentPage >= state.inventory.length) state.currentPage = state.inventory.length - 1;
-  renderInventory();
-}
-
-function addItem(pageIdx) {
-  const page = state.inventory[pageIdx];
-  const itemNo = page.items.length > 0 ? page.items[page.items.length - 1].itemNo + 1 : 1;
-  page.items.push({ itemNo, check: false, carton: '', cp: false, contents: '', room: '', shipperCheck: false, images: [] });
-  renderInventory();
-}
-
-function removeItem(pageIdx, itemIdx) {
-  state.inventory[pageIdx].items.splice(itemIdx, 1);
-  renderInventory();
-}
-
-function updateItem(pageIdx, itemIdx, field, value) {
-  state.inventory[pageIdx].items[itemIdx][field] = value;
-  if (field === 'carton') updateCartonCount();
-}
-
-function updateCartonCount() {
-  let total = 0;
-  state.inventory.forEach(p => {
-    p.items.forEach(it => {
-      const match = String(it.carton).match(/^\s*(\d+(?:\.\d+)?)/);
-      if (match) total += parseFloat(match[1]);
-    });
-  });
-  const el = document.getElementById('carton-count');
-  if (el) el.textContent = total;
-}
-
-function triggerImage(pageIdx, itemIdx) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.multiple = true;
-  input.onchange = e => {
-    Array.from(e.target.files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = ev => {
-        state.inventory[pageIdx].items[itemIdx].images.push(ev.target.result);
-        renderInventory();
+      const handleHeaderChange = (e) => {
+        const { name, value } = e.target;
+        setHeader(prev => ({ ...prev, [name]: value }));
       };
-      reader.readAsDataURL(file);
-    });
-  };
-  input.click();
-}
 
-function removeImage(pageIdx, itemIdx, imgIdx) {
-  state.inventory[pageIdx].items[itemIdx].images.splice(imgIdx, 1);
-  renderInventory();
-}
+      const handleItemChange = (index, field, value) => {
+        setItems(prev => {
+          const updated = [...prev];
+          updated[index] = { ...updated[index], [field]: value };
+          return updated;
+        });
+      };
 
-function showImage(src) {
-  document.getElementById('img-overlay-img').src = src;
-  document.getElementById('img-overlay').style.display = 'flex';
-}
+      const addMoreRows = () => {
+        setItems(prev => [
+          ...prev,
+          ...Array.from({ length: 10 }, (_, i) => ({
+            id: prev.length + i + 1,
+            article: '',
+            cp: false,
+            contents: '',
+            room: ''
+          }))
+        ]);
+      };
 
-function initSignature(pageIdx) {
-  const canvas = document.getElementById('sig-' + pageIdx);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.strokeStyle = '#000000';
+      const saveSignature = () => {
+        if (sigPadInstance.current && !sigPadInstance.current.isEmpty()) {
+          const dataUrl = sigPadInstance.current.toDataURL();
+          if (activeSigModal === 'driver') setDriverSig(dataUrl);
+          if (activeSigModal === 'owner') setOwnerSig(dataUrl);
+          setActiveSigModal(null);
+        }
+      };
 
-  let drawing = false;
+      const clearSignature = () => {
+        if (sigPadInstance.current) sigPadInstance.current.clear();
+      };
 
-  function getPos(e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
-  }
-
-  function start(e) {
-    drawing = true;
-    const p = getPos(e);
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y);
-    if (e.cancelable) e.preventDefault();
-  }
-  function move(e) {
-    if (!drawing) return;
-    const p = getPos(e);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-    if (e.cancelable) e.preventDefault();
-  }
-  function end() {
-    if (!drawing) return;
-    drawing = false;
-    state.inventory[pageIdx].signature = canvas.toDataURL();
-    propagateSignature(pageIdx);
-  }
-
-  canvas.addEventListener('mousedown', start);
-  canvas.addEventListener('mousemove', move);
-  canvas.addEventListener('mouseup', end);
-  canvas.addEventListener('mouseleave', end);
-  canvas.addEventListener('touchstart', start, {passive: false});
-  canvas.addEventListener('touchmove', move, {passive: false});
-  canvas.addEventListener('touchend', end);
-
-  if (state.inventory[pageIdx].signature) {
-    const img = new Image();
-    img.onload = () => ctx.drawImage(img, 0, 0);
-    img.src = state.inventory[pageIdx].signature;
-  }
-}
-
-function clearSignature(pageIdx) {
-  state.inventory[pageIdx].signature = null;
-  const canvas = document.getElementById('sig-' + pageIdx);
-  if (canvas) {
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-  propagateSignature(pageIdx);
-}
-
-function propagateSignature(fromIdx) {
-  const sig = state.inventory[fromIdx].signature;
-  const propagate = state.inventory[fromIdx].propagate;
-  if (!propagate) return;
-  for (let i = fromIdx + 1; i < state.inventory.length; i++) {
-    if (state.inventory[i].propagate) {
-      state.inventory[i].signature = sig;
-    }
-  }
-  renderInventory();
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text || '';
-  return div.innerHTML;
-}
-
-function renderInventory() {
-  const container = document.getElementById('inventory-content');
-  const page = state.inventory[state.currentPage];
-  const tabsEl = document.getElementById('page-tabs');
-
-  tabsEl.innerHTML = state.inventory.map((p, i) => `
-    <button class="page-tab ${i === state.currentPage ? 'active' : ''}" onclick="switchPage(${i})">
-      Page ${p.pageNum}
-      ${state.inventory.length > 1 ? `<span onclick="event.stopPropagation(); removePage(${i})">×</span>` : ''}
-    </button>
-  `).join('');
-
-  const s = state.setup;
-  let html = `
-    <div class="header-summary">
-      <div><strong>${escapeHtml(s.name) || '—'}</strong><br>Shipper</div>
-      <div>${escapeHtml(s.oCity)}${s.oState ? ', ' + escapeHtml(s.oState) : ''} → ${escapeHtml(s.dCity)}${s.dState ? ', ' + escapeHtml(s.dState) : ''}<br>Route</div>
-      <div>BOL: ${escapeHtml(s.bol) || '—'}<br>Ref: ${escapeHtml(s.ref) || '—'}</div>
-      <div>Tape Lot: ${escapeHtml(s.tape) || '—'}<br>Color: ${escapeHtml(s.tColor) || '—'}</div>
-    </div>
-
-    <div class="flex items-center justify-between mb-2">
-      <div>Total Cartons: <strong id="carton-count">0</strong></div>
-      <button class="btn btn-sm" onclick="addItem(${state.currentPage})">+ Add Item</button>
-    </div>
-
-    <div class="table-responsive">
-      <table class="inv-table">
-        <thead>
-          <tr>
-            <th style="width:50px;">Item</th>
-            <th style="width:40px;">Chk</th>
-            <th style="width:70px;">Carton</th>
-            <th style="width:40px;">C/P</th>
-            <th>Contents / Condition</th>
-            <th style="width:100px;">Room</th>
-            <th style="width:40px;">Shpr</th>
-            <th style="width:90px;">Photos</th>
-            <th style="width:40px;"></th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  page.items.forEach((it, idx) => {
-    html += `
-      <tr>
-        <td><input type="number" value="${it.itemNo}" onchange="updateItem(${state.currentPage}, ${idx}, 'itemNo', parseInt(this.value)||0)"></td>
-        <td style="text-align:center;"><input type="checkbox" ${it.check ? 'checked' : ''} onchange="updateItem(${state.currentPage}, ${idx}, 'check', this.checked)"></td>
-        <td><input type="text" value="${escapeHtml(it.carton)}" onchange="updateItem(${state.currentPage}, ${idx}, 'carton', this.value)"></td>
-        <td style="text-align:center;"><input type="checkbox" ${it.cp ? 'checked' : ''} onchange="updateItem(${state.currentPage}, ${idx}, 'cp', this.checked)"></td>
-        <td><input type="text" value="${escapeHtml(it.contents)}" onchange="updateItem(${state.currentPage}, ${idx}, 'contents', this.value)"></td>
-        <td><input type="text" value="${escapeHtml(it.room)}" onchange="updateItem(${state.currentPage}, ${idx}, 'room', this.value)"></td>
-        <td style="text-align:center;"><input type="checkbox" ${it.shipperCheck ? 'checked' : ''} onchange="updateItem(${state.currentPage}, ${idx}, 'shipperCheck', this.checked)"></td>
-        <td>
-          <div class="photo-strip">
-            ${it.images.map((img, imgI) => `<img src="${img}" class="img-thumb" onclick="showImage('${img}')">`).join('')}
-            <button class="btn-ghost" onclick="triggerImage(${state.currentPage}, ${idx})">+</button>
+      return (
+        <div class="max-w-5xl mx-auto p-4 md:p-6">
+          {/* Action Toolbar */}
+          <div class="no-print bg-white p-4 rounded-lg shadow mb-6 flex flex-wrap justify-between items-center gap-4">
+            <div>
+              <h1 class="text-xl font-bold text-gray-800">Digital Inventory System</h1>
+              <p class="text-xs text-gray-500">Auto-counting cartons, auto-paging, and unified signature sync.</p>
+            </div>
+            <div class="flex gap-2">
+              <button onClick={addMoreRows} class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 font-medium">
+                + Add 10 Rows
+              </button>
+              <button onClick={() => window.print()} class="bg-emerald-600 text-white px-4 py-2 rounded text-sm hover:bg-emerald-700 font-medium">
+                Print / Save PDF
+              </button>
+            </div>
           </div>
-        </td>
-        <td><button class="btn-ghost btn-danger" onclick="removeItem(${state.currentPage}, ${idx})">×</button></td>
-      </tr>
-    `;
-  });
 
-  html += `
-        </tbody>
-      </table>
-    </div>
+          {/* Render Pages Dynamically */}
+          {Array.from({ length: totalPages }).map((_, pageIdx) => {
+            const pageItems = items.slice(pageIdx * ITEMS_PER_PAGE, (pageIdx + 1) * ITEMS_PER_PAGE);
 
-    <div class="mt-2">
-      <label><strong>Page Signature</strong></label>
-      <div class="sig-wrap">
-        <canvas id="sig-${state.currentPage}" class="sig-canvas" width="400" height="120"></canvas>
-      </div>
-      <div class="flex items-center gap-2 mb-2">
-        <button class="btn btn-sm" onclick="clearSignature(${state.currentPage})">Clear Signature</button>
-        <label><input type="checkbox" id="prop-${state.currentPage}" ${page.propagate ? 'checked' : ''} onchange="state.inventory[${state.currentPage}].propagate = this.checked"> Apply to future pages</label>
-      </div>
-    </div>
-  `;
+            return (
+              <div key={pageIdx} class="bg-white p-6 border border-gray-400 shadow-md mb-8 print-shadow-none page-break text-xs">
+                {/* Header Section */}
+                <div class="border-b-2 border-black pb-2 mb-2">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <h2 class="font-bold text-sm">DESCRIPTIVE INVENTORY</h2>
+                      <p class="text-[10px] text-gray-600">HOUSEHOLD GOODS</p>
+                    </div>
+                    <div class="flex gap-4 text-right">
+                      <div class="border border-black px-2 py-1">
+                        <span class="block font-bold">PAGE NO.</span>
+                        <span>{pageIdx + 1}</span>
+                      </div>
+                      <div class="border border-black px-2 py-1">
+                        <span class="block font-bold">NO. OF PAGES</span>
+                        <span>{totalPages}</span>
+                      </div>
+                    </div>
+                  </div>
 
-  container.innerHTML = html;
-  updateCartonCount();
-  setTimeout(() => initSignature(state.currentPage), 50);
-}
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+                    <div class="col-span-2">
+                      <label class="block text-[9px] font-bold uppercase">Shipper's Name</label>
+                      <input 
+                        type="text" 
+                        name="shipperName" 
+                        value={header.shipperName} 
+                        onChange={handleHeaderChange}
+                        placeholder="Tap to type..."
+                        class="w-full border-b border-gray-400 focus:outline-none focus:border-blue-500 bg-transparent px-1 py-0.5"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-[9px] font-bold uppercase">Carrier Ref No.</label>
+                      <input 
+                        type="text" 
+                        name="carrierRef" 
+                        value={header.carrierRef} 
+                        onChange={handleHeaderChange}
+                        class="w-full border-b border-gray-400 focus:outline-none focus:border-blue-500 bg-transparent px-1 py-0.5"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-[9px] font-bold uppercase">Bill of Lading No.</label>
+                      <input 
+                        type="text" 
+                        name="billOfLading" 
+                        value={header.billOfLading} 
+                        onChange={handleHeaderChange}
+                        class="w-full border-b border-gray-400 focus:outline-none focus:border-blue-500 bg-transparent px-1 py-0.5"
+                      />
+                    </div>
+                    <div class="col-span-2">
+                      <label class="block text-[9px] font-bold uppercase">Origin City, State</label>
+                      <input 
+                        type="text" 
+                        name="origin" 
+                        value={header.origin} 
+                        onChange={handleHeaderChange}
+                        class="w-full border-b border-gray-400 focus:outline-none focus:border-blue-500 bg-transparent px-1 py-0.5"
+                      />
+                    </div>
+                    <div class="col-span-2">
+                      <label class="block text-[9px] font-bold uppercase">Destination City, State</label>
+                      <input 
+                        type="text" 
+                        name="destination" 
+                        value={header.destination} 
+                        onChange={handleHeaderChange}
+                        class="w-full border-b border-gray-400 focus:outline-none focus:border-blue-500 bg-transparent px-1 py-0.5"
+                      />
+                    </div>
+                  </div>
+                </div>
 
-function renderDamage() {
-  const container = document.getElementById('damage-content');
-  let html = `
-    <div class="damage-section">
-      <h3>Pre-Move Residence Damage</h3>
-      ${state.damage.pre.map((d, i) => renderDamageCard('pre', i, d)).join('')}
-      <button class="btn btn-sm" onclick="addDamageItem('pre')">+ Add Pre-Move Item</button>
-    </div>
+                {/* Main Table */}
+                <table class="w-full border-collapse border border-black mb-2 text-left">
+                  <thead>
+                    <tr class="bg-gray-100 border-b border-black text-center text-[10px]">
+                      <th class="border border-black p-1 w-12">ITEM NO.</th>
+                      <th class="border border-black p-1">CARTON SIZE OR ARTICLE</th>
+                      <th class="border border-black p-1 w-10">CP</th>
+                      <th class="border border-black p-1">CONTENTS OR CONDITION</th>
+                      <th class="border border-black p-1">ROOM</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageItems.map((item, localIdx) => {
+                      const globalIdx = pageIdx * ITEMS_PER_PAGE + localIdx;
+                      return (
+                        <tr key={item.id} class="border-b border-gray-300">
+                          <td class="border border-black px-1 text-center font-bold">{globalIdx + 1}</td>
+                          <td class="border border-black p-0">
+                            <input 
+                              type="text" 
+                              value={item.article} 
+                              onChange={(e) => handleItemChange(globalIdx, 'article', e.target.value)}
+                              class="w-full h-full px-1 py-1 focus:bg-blue-50 focus:outline-none bg-transparent"
+                            />
+                          </td>
+                          <td class="border border-black text-center p-0">
+                            <input 
+                              type="checkbox" 
+                              checked={item.cp} 
+                              onChange={(e) => handleItemChange(globalIdx, 'cp', e.target.checked)}
+                              class="h-4 w-4 text-blue-600 rounded"
+                            />
+                          </td>
+                          <td class="border border-black p-0">
+                            <input 
+                              type="text" 
+                              value={item.contents} 
+                              onChange={(e) => handleItemChange(globalIdx, 'contents', e.target.value)}
+                              class="w-full h-full px-1 py-1 focus:bg-blue-50 focus:outline-none bg-transparent"
+                            />
+                          </td>
+                          <td class="border border-black p-0">
+                            <input 
+                              type="text" 
+                              value={item.room} 
+                              onChange={(e) => handleItemChange(globalIdx, 'room', e.target.value)}
+                              class="w-full h-full px-1 py-1 focus:bg-blue-50 focus:outline-none bg-transparent"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
 
-    <div class="damage-section">
-      <h3>Post-Move Residence Damage</h3>
-      ${state.damage.post.map((d, i) => renderDamageCard('post', i, d)).join('')}
-      <button class="btn btn-sm" onclick="addDamageItem('post')">+ Add Post-Move Item</button>
-    </div>
-  `;
-  container.innerHTML = html;
-}
+                {/* Footer Section & Signatures */}
+                <div class="border border-black p-2 mt-2">
+                  <div class="flex justify-between items-center mb-2 font-bold text-[11px] bg-gray-50 p-1 border border-gray-300">
+                    <span>TOTAL CARTONS COUNTED: {totalCartons}</span>
+                    <span>TAPE LOT NO: <input type="text" name="tapeLotNo" value={header.tapeLotNo} onChange={handleHeaderChange} class="border-b border-black w-20 bg-transparent px-1" /></span>
+                    <span>COLOR: <input type="text" name="tapeColor" value={header.tapeColor} onChange={handleHeaderChange} class="border-b border-black w-20 bg-transparent px-1" /></span>
+                  </div>
 
-function renderDamageCard(type, idx, item) {
-  return `
-    <div class="damage-card">
-      <div class="field mb-2"><label>Location / Area</label><input type="text" value="${escapeHtml(item.loc)}" onchange="state.damage.${type}[${idx}].loc = this.value"></div>
-      <div class="field mb-2"><label>Damage Description</label><textarea onchange="state.damage.${type}[${idx}].desc = this.value">${escapeHtml(item.desc)}</textarea></div>
-      <div class="flex items-center justify-between">
-        <div class="photo-strip">
-          ${item.imgs.map((img) => `<img src="${img}" class="img-thumb" onclick="showImage('${img}')">`).join('')}
-          <button class="btn-ghost" onclick="triggerDamageImage('${type}', ${idx})">+ Photo</button>
+                  <div class="grid grid-cols-2 gap-4 mt-2">
+                    {/* Driver Signature Box */}
+                    <div class="border border-black p-2 relative text-center min-h-[60px] flex flex-col justify-between">
+                      <span class="text-[9px] font-bold block text-left">DRIVER SIGNATURE</span>
+                      {driverSig ? (
+                        <img src={driverSig} alt="Driver Signature" class="max-h-12 mx-auto object-contain" />
+                      ) : (
+                        <button 
+                          onClick={() => setActiveSigModal('driver')} 
+                          class="no-print bg-gray-200 hover:bg-gray-300 text-xs py-1 px-2 rounded mt-2"
+                        >
+                          Tap to Sign (Propagates Globally)
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Owner Signature Box */}
+                    <div class="border border-black p-2 relative text-center min-h-[60px] flex flex-col justify-between">
+                      <span class="text-[9px] font-bold block text-left">OWNER / AUTHORIZED AGENT SIGNATURE</span>
+                      {ownerSig ? (
+                        <img src={ownerSig} alt="Owner Signature" class="max-h-12 mx-auto object-contain" />
+                      ) : (
+                        <button 
+                          onClick={() => setActiveSigModal('owner')} 
+                          class="no-print bg-gray-200 hover:bg-gray-300 text-xs py-1 px-2 rounded mt-2"
+                        >
+                          Tap to Sign (Propagates Globally)
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Signature Capture Modal */}
+          {activeSigModal && (
+            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div class="bg-white rounded-lg p-4 max-w-md w-full shadow-xl">
+                <h3 class="font-bold text-lg mb-2">
+                  Draw {activeSigModal === 'driver' ? 'Driver' : 'Owner'} Signature
+                </h3>
+                <div class="border border-gray-400 rounded mb-4">
+                  <canvas ref={sigCanvasRef} class="w-full h-40 touch-none"></canvas>
+                </div>
+                <div class="flex justify-between">
+                  <button onClick={clearSignature} class="bg-gray-200 text-gray-800 px-3 py-1.5 rounded text-sm">
+                    Clear
+                  </button>
+                  <div class="flex gap-2">
+                    <button onClick={() => setActiveSigModal(null)} class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded text-sm">
+                      Cancel
+                    </button>
+                    <button onClick={saveSignature} class="bg-blue-600 text-white px-4 py-1.5 rounded text-sm font-medium">
+                      Save & Apply
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-        <button class="btn-ghost btn-danger" onclick="removeDamageItem('${type}', ${idx})">Remove</button>
-      </div>
-    </div>
-  `;
-}
+      );
+    }
 
-function addDamageItem(type) {
-  state.damage[type].push({ loc: '', desc: '', imgs: [] });
-  renderDamage();
-}
-
-function removeDamageItem(type, idx) {
-  state.damage[type].splice(idx, 1);
-  renderDamage();
-}
-
-function triggerDamageImage(type, idx) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.multiple = true;
-  input.onchange = e => {
-    Array.from(e.target.files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = ev => {
-        state.damage[type][idx].imgs.push(ev.target.result);
-        renderDamage();
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-  input.click();
-}
-</script>
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<InventoryApp />);
+  </script>
 </body>
 </html>

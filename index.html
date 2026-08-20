@@ -65,7 +65,35 @@
   .panel { display: none; padding-bottom: 40px; }
   .panel.active { display: block; }
 
-  /* Paper form header */
+  .setup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 16px;
+    margin-bottom: 12px;
+  }
+  .setup-grid .field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .setup-grid label {
+    font-size: 11px;
+    color: var(--text-sec);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .setup-grid input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    font-size: 14px;
+    color: var(--text);
+    font-family: inherit;
+  }
+  .setup-grid input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
   .sheet {
     border: 2px solid var(--text-hi);
     background: var(--bg);
@@ -99,43 +127,7 @@
     font-weight: 700;
     margin-bottom: 2px;
   }
-  .sheet input, .setup-grid input, .setup-grid textarea {
-    width: 100%;
-    border: none;
-    background: transparent;
-    font-size: 14px;
-    color: var(--text);
-    font-family: inherit;
-    padding: 2px 0;
-  }
-  .sheet input:focus, .setup-grid input:focus { outline: none; }
 
-  .setup-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px 16px;
-    margin-bottom: 12px;
-  }
-  .setup-grid .field {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-  .setup-grid label {
-    font-size: 11px;
-    color: var(--text-sec);
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-  .setup-grid input {
-    padding: 8px 10px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background: var(--bg);
-    font-size: 14px;
-  }
-
-  /* Inventory table */
   .inv-table {
     width: 100%;
     border-collapse: collapse;
@@ -207,9 +199,6 @@
     width: 3px;
     background: var(--accent);
   }
-  .row-num.target {
-    background: color-mix(in srgb, var(--accent) 6%, transparent);
-  }
 
   .photo-cell {
     display: flex;
@@ -238,7 +227,6 @@
     padding: 0;
   }
 
-  /* Bottom area */
   .bottom-block {
     border-top: 2px solid var(--text-hi);
     padding: 10px;
@@ -273,7 +261,6 @@
     padding-top: 8px;
   }
 
-  /* Tally page */
   .tally-grid {
     display: grid;
     grid-template-columns: 2fr 1fr 1fr;
@@ -296,7 +283,6 @@
   }
   .tally-grid > div:nth-child(3n) { border-right: none; }
 
-  /* Condition table */
   .cond-table {
     width: 100%;
     border-collapse: collapse;
@@ -336,7 +322,6 @@
     background: rgba(37,99,235,0.04);
   }
 
-  /* Page tabs */
   .page-tabs {
     display: flex;
     gap: 4px;
@@ -420,7 +405,6 @@
   <button class="tab-btn" data-tab="postmove" onclick="switchTab('postmove')">Post-move</button>
 </div>
 
-<!-- SETUP -->
 <div id="panel-setup" class="panel active">
   <div class="setup-grid">
     <div class="field"><label>Shipper's Name</label><input id="s-name" oninput="updateSetup()"></div>
@@ -437,7 +421,6 @@
   </div>
 </div>
 
-<!-- INVENTORY -->
 <div id="panel-inventory" class="panel">
   <div class="flex between items-center mb-2">
     <div class="page-tabs" id="inv-tabs"></div>
@@ -446,17 +429,14 @@
   <div id="inv-content"></div>
 </div>
 
-<!-- TALLY -->
 <div id="panel-tally" class="panel">
   <div id="tally-content"></div>
 </div>
 
-<!-- PRE-MOVE -->
 <div id="panel-premove" class="panel">
   <div id="premove-content"></div>
 </div>
 
-<!-- POST-MOVE -->
 <div id="panel-postmove" class="panel">
   <div id="postmove-content"></div>
 </div>
@@ -510,7 +490,6 @@ function updateSetup() {
 function g(id){ return document.getElementById(id); }
 function esc(t){ const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
 
-/* ---------- Pages ---------- */
 function addPage() {
   const prev = state.pages[state.pages.length-1];
   const p = makePage(state.pages.length+1);
@@ -529,13 +508,11 @@ function removePage(i){
   renderInv();
 }
 
-/* ---------- Inventory grid ---------- */
 function updateItem(pi, ri, f, v){
   state.pages[pi].items[ri][f]=v;
-  if(f==='carton') updateTally();
+  if(f==='carton') updateCartonTotal();
 }
 
-/* ---------- Duplicate / Fill-down ---------- */
 let lpTimer=null, lpFired=false;
 function rowPointerDown(e, pi, ri){
   if(e.button!==0) return;
@@ -570,7 +547,6 @@ function applyDup(pi, src, tgt){
   renderInv(); toast('Filled down');
 }
 
-/* ---------- Photos ---------- */
 function snapPhoto(pi, ri){
   const inp=document.createElement('input');
   inp.type='file'; inp.accept='image/*'; inp.capture='environment';
@@ -586,7 +562,6 @@ function snapPhoto(pi, ri){
 function delPhoto(pi, ri, ii){ state.pages[pi].items[ri].images.splice(ii,1); renderInv(); }
 function showImg(src){ g('overlay-img').src=src; g('overlay').style.display='flex'; }
 
-/* ---------- Signature ---------- */
 function initSig(pi){
   const c=g('sig-'+pi); if(!c) return;
   const dpr=window.devicePixelRatio||1;
@@ -631,8 +606,6 @@ function propagateSig(from){
   renderInv();
 }
 
-/* ---------- Tally ---------- */
-function updateTally(){}
 function computeTally(){
   const tally={}; let total=0;
   state.pages.forEach(p=>{
@@ -686,7 +659,6 @@ function renderTally(){
   g('tally-content').innerHTML=html;
 }
 
-/* ---------- Render Inventory ---------- */
 function renderInvTabs(){
   const el=g('inv-tabs'); if(!el) return;
   el.innerHTML=state.pages.map((p,i)=>`
@@ -754,10 +726,10 @@ function renderInv(){
           ${it.itemNo}
         </td>
         <td><input type="checkbox" ${it.check?'checked':''} onchange="updateItem(${state.currentPage},${idx},'check',this.checked)"></td>
-        <td><input type="text" value="${esc(it.carton)}" oninput="updateItem(${state.currentPage},${idx},'carton',this.value)" placeholder="3.0 ctn"></td>
+        <td><input type="text" value="${esc(it.carton)}" oninput="updateItem(${state.currentPage},${idx},'carton',this.value)"></td>
         <td><input type="checkbox" ${it.cp?'checked':''} onchange="updateItem(${state.currentPage},${idx},'cp',this.checked)"></td>
-        <td><textarea rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';updateItem(${state.currentPage},${idx},'contents',this.value)" placeholder="Decor">${esc(it.contents)}</textarea></td>
-        <td><input type="text" value="${esc(it.room)}" oninput="updateItem(${state.currentPage},${idx},'room',this.value)" placeholder="LR"></td>
+        <td><textarea rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';updateItem(${state.currentPage},${idx},'contents',this.value)">${esc(it.contents)}</textarea></td>
+        <td><input type="text" value="${esc(it.room)}" oninput="updateItem(${state.currentPage},${idx},'room',this.value)"></td>
         <td><input type="checkbox" ${it.shipperCheck?'checked':''} onchange="updateItem(${state.currentPage},${idx},'shipperCheck',this.checked)"></td>
         <td class="photo-cell">
           ${imgs}
@@ -817,13 +789,12 @@ function renderInv(){
 function updateCartonTotal(){
   let t=0;
   state.pages.forEach(p=>p.items.forEach(it=>{
-    const m=String(it.carton).match(/^\\s*(\\d+(?:\\.\\d+)?)/);
+    const m=String(it.carton).match(/^\s*(\d+(?:\.\d+)?)/);
     if(m) t+=parseFloat(m[1]);
   }));
-  const el=g('carton-total'); if(el) el.textContent=t.toFixed(1).replace(/\\.0$/,'');
+  const el=g('carton-total'); if(el) el.textContent=t.toFixed(1).replace(/\.0$/,'');
 }
 
-/* ---------- Condition ---------- */
 function condPhoto(type, idx){
   const inp=document.createElement('input');
   inp.type='file'; inp.accept='image/*'; inp.capture='environment';
@@ -876,8 +847,8 @@ function renderCond(type){
     html+=`
       <tr>
         <td class="mono" style="text-align:center;color:var(--text-sec);font-size:11px;">${idx+1}</td>
-        <td><input type="text" value="${esc(it.loc)}" oninput="state.${type}[${idx}].loc=this.value" placeholder="Living room"></td>
-        <td><textarea rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';state.${type}[${idx}].desc=this.value" placeholder="Scuff mark...">${esc(it.desc)}</textarea></td>
+        <td><input type="text" value="${esc(it.loc)}" oninput="state.${type}[${idx}].loc=this.value"></td>
+        <td><textarea rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';state.${type}[${idx}].desc=this.value">${esc(it.desc)}</textarea></td>
         <td class="photo-cell">
           ${imgs}
           <button class="cam-btn" onclick="condPhoto('${type}',${idx})">

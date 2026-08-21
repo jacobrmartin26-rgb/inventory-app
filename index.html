@@ -5,461 +5,82 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Household Goods Descriptive Inventory</title>
 <style>
-  :root {
-    --bg: #ffffff;
-    --surface: #f7f7f8;
-    --border: #c0c0c0;
-    --border-light: #e0e0e0;
-    --text: #111;
-    --text-sec: #555;
-    --text-hi: #000;
-    --accent: #2563eb;
-    --accent-light: rgba(37,99,235,0.08);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0a0a0a;
-      --surface: #1a1a1a;
-      --border: #444;
-      --border-light: #333;
-      --text: #eee;
-      --text-sec: #999;
-      --text-hi: #fff;
-      --accent-light: rgba(37,99,235,0.15);
-    }
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 13px;
-    line-height: 1.4;
-    padding: 8px;
-    -webkit-tap-highlight-color: transparent;
-    overscroll-behavior-y: none;
-  }
-  body.dragging { touch-action: none; overflow: hidden; }
-
-  .tabs {
-    display: flex;
-    gap: 2px;
-    border-bottom: 2px solid var(--text-hi);
-    margin-bottom: 10px;
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-    z-index: 20;
-    padding-top: 2px;
-  }
-  .tab-btn {
-    padding: 8px 14px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-sec);
-    font-weight: 600;
-    font-size: 13px;
-    border-bottom: 3px solid transparent;
-    font-family: inherit;
-    white-space: nowrap;
-  }
-  .tab-btn.active { color: var(--text-hi); border-bottom-color: var(--text-hi); }
-  .panel { display: none; padding-bottom: 40px; }
-  .panel.active { display: block; }
-
-  .setup-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px 16px;
-    margin-bottom: 12px;
-  }
-  .setup-grid .field {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-  .setup-grid label {
-    font-size: 11px;
-    color: var(--text-sec);
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-  .setup-grid input {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background: var(--bg);
-    font-size: 14px;
-    color: var(--text);
-    font-family: inherit;
-  }
-  .setup-grid input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-
-  .sheet {
-    border: 2px solid var(--text-hi);
-    background: var(--bg);
-    margin-bottom: 16px;
-  }
-  .sheet-top {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    border-bottom: 2px solid var(--text-hi);
-  }
-  .sheet-top > div {
-    padding: 6px 10px;
-    border-right: 1px solid var(--border);
-  }
-  .sheet-top > div:last-child { border-right: none; }
-  .sheet-mid {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto auto;
-    border-bottom: 1px solid var(--border);
-  }
-  .sheet-mid > div {
-    padding: 6px 10px;
-    border-right: 1px solid var(--border);
-  }
-  .sheet-mid > div:last-child { border-right: none; }
-  .lbl {
-    font-size: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-sec);
-    font-weight: 700;
-    margin-bottom: 2px;
-  }
-
-  /* Legend */
-  .legend-wrap {
-    border-bottom: 1px solid var(--border);
-    padding: 4px 6px;
-    background: var(--surface);
-  }
-  .legend-title {
-    font-size: 8px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-sec);
-    margin-bottom: 2px;
-  }
-  .legend-cols {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
-  .sym-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px 4px;
-  }
-  .sym {
-    font-size: 9px;
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .sym code {
-    font-family: ui-monospace, monospace;
-    font-weight: 700;
-    font-size: 9px;
-    margin-right: 2px;
-  }
-
-  .inv-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .inv-table th {
-    border-bottom: 2px solid var(--text-hi);
-    border-right: 1px solid var(--border);
-    padding: 5px 4px;
-    font-size: 9px;
-    font-weight: 700;
-    text-transform: uppercase;
-    text-align: center;
-    background: var(--surface);
-    line-height: 1.2;
-  }
-  .inv-table th:last-child { border-right: none; }
-  .inv-table td {
-    border-bottom: 1px solid var(--border-light);
-    border-right: 1px solid var(--border-light);
-    padding: 2px 3px;
-    height: 32px;
-    vertical-align: middle;
-  }
-  .inv-table td:last-child { border-right: none; }
-  .inv-table input[type="text"],
-  .inv-table textarea {
-    width: 100%;
-    border: none;
-    background: transparent;
-    font-size: 13px;
-    color: var(--text);
-    font-family: inherit;
-    padding: 2px 4px;
-    resize: none;
-    line-height: 1.3;
-  }
-  .inv-table input:focus, .inv-table textarea:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-    background: var(--accent-light);
-  }
-  .inv-table input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--text-hi);
-    cursor: pointer;
-    display: block;
-    margin: 0 auto;
-  }
-  .row-num {
-    text-align: center;
-    font-family: ui-monospace, monospace;
-    font-size: 11px;
-    color: var(--text-sec);
-    user-select: none;
-    touch-action: none;
-    position: relative;
-    width: 36px;
-    cursor: pointer;
-  }
-  .row-num.source {
-    background: color-mix(in srgb, var(--accent) 18%, transparent);
-    color: var(--accent);
-    font-weight: 700;
-  }
-  .row-num.source::after {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: var(--accent);
-  }
-  .row-num.target {
-    background: color-mix(in srgb, var(--accent) 8%, transparent);
-  }
-
-  .photo-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    flex-wrap: wrap;
-    min-width: 44px;
-  }
-  .thumb {
-    width: 22px;
-    height: 22px;
-    object-fit: cover;
-    border-radius: 2px;
-    cursor: pointer;
-    border: 1px solid var(--border);
-  }
-  .cam-btn {
-    width: 22px; height: 22px;
-    display: flex; align-items: center; justify-content: center;
-    border: 1px dashed var(--border);
-    border-radius: 2px;
-    background: none;
-    cursor: pointer;
-    color: var(--text-sec);
-    padding: 0;
-  }
-
-  .bottom-block {
-    border-top: 2px solid var(--text-hi);
-    padding: 10px;
-  }
-  .sig-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .sig-box {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 8px;
-    background: var(--bg);
-  }
-  .sig-box .lbl { margin-bottom: 4px; }
-  .sig-canvas {
-    width: 100%;
-    height: 80px;
-    display: block;
-    cursor: crosshair;
-    touch-action: none;
-    background: var(--bg);
-  }
-  .tape-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    gap: 8px;
-    font-size: 11px;
-    border-top: 1px solid var(--border);
-    padding-top: 8px;
-  }
-
-  .tally-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    gap: 0;
-    border: 2px solid var(--text-hi);
-    margin-bottom: 12px;
-  }
-  .tally-grid > div {
-    padding: 6px 8px;
-    border-bottom: 1px solid var(--border-light);
-    border-right: 1px solid var(--border-light);
-    font-size: 13px;
-  }
-  .tally-grid .th {
-    background: var(--surface);
-    font-weight: 700;
-    font-size: 10px;
-    text-transform: uppercase;
-    border-bottom: 2px solid var(--text-hi);
-  }
-  .tally-grid > div:nth-child(3n) { border-right: none; }
-
-  .cond-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .cond-table th {
-    border-bottom: 2px solid var(--text-hi);
-    border-right: 1px solid var(--border);
-    padding: 5px 4px;
-    font-size: 9px;
-    font-weight: 700;
-    text-transform: uppercase;
-    text-align: center;
-    background: var(--surface);
-  }
-  .cond-table th:last-child { border-right: none; }
-  .cond-table td {
-    border-bottom: 1px solid var(--border-light);
-    border-right: 1px solid var(--border-light);
-    padding: 2px 3px;
-    height: 32px;
-    vertical-align: middle;
-  }
-  .cond-table td:last-child { border-right: none; }
-  .cond-table input, .cond-table textarea {
-    width: 100%;
-    border: none;
-    background: transparent;
-    font-size: 13px;
-    color: var(--text);
-    font-family: inherit;
-    padding: 2px 4px;
-    resize: none;
-  }
-  .cond-table input:focus, .cond-table textarea:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-    background: var(--accent-light);
-  }
-
-  .page-tabs, .lot-tabs {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-    margin-bottom: 6px;
-  }
-  .page-tab, .lot-tab {
-    padding: 5px 12px;
-    border-radius: 4px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    cursor: pointer;
-    font-size: 12px;
-    font-family: inherit;
-    font-weight: 600;
-  }
-  .page-tab.active, .lot-tab.active {
-    background: var(--text-hi);
-    color: var(--bg);
-    border-color: var(--text-hi);
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 12px;
-    border-radius: 4px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    cursor: pointer;
-    font-size: 12px;
-    font-family: inherit;
-    font-weight: 600;
-    touch-action: manipulation;
-  }
-  .btn-primary { background: var(--text-hi); color: var(--bg); border-color: var(--text-hi); }
-  .btn-ghost { background: transparent; border: none; padding: 2px; color: var(--text-sec); }
-  .btn-sm { padding: 4px 8px; font-size: 11px; }
-  .btn-danger { color: var(--danger); }
-
-  .overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.9);
-    display: none;
-    align-items: center; justify-content: center;
-    z-index: 100;
-    padding: 16px;
-  }
-  .overlay img { max-width: 100%; max-height: 100%; border-radius: 4px; object-fit: contain; }
-
-  .toast {
-    position: fixed; bottom: 20px; left: 50%;
-    transform: translateX(-50%);
-    background: var(--text-hi); color: var(--bg);
-    padding: 8px 16px; border-radius: 6px;
-    font-size: 12px; font-weight: 600;
-    z-index: 50; opacity: 0;
-    transition: opacity 150ms;
-    pointer-events: none;
-  }
-  .toast.show { opacity: 1; }
-
-  .flex { display: flex; }
-  .between { justify-content: space-between; }
-  .items-center { align-items: center; }
-  .gap-1 { gap: 4px; }
-  .gap-2 { gap: 8px; }
-  .mb-1 { margin-bottom: 4px; }
-  .mb-2 { margin-bottom: 8px; }
-  .mt-2 { margin-top: 8px; }
-  .mono { font-family: ui-monospace, monospace; }
-  .small { font-size: 11px; color: var(--text-sec); }
-
-  @media print {
-    body { padding: 0; background: #fff; color: #000; }
-    .tabs, .btn, .page-tabs, .lot-tabs, .cam-btn, .btn-ghost, .toast, #overlay, .no-print { display: none !important; }
-    .panel { display: block !important; }
-    #panel-setup, #panel-tally, #panel-premove, #panel-postmove { display: none !important; }
-    #panel-inventory { display: block !important; }
-    .sheet { border: 2px solid #000; page-break-after: always; margin-bottom: 0; }
-    .sheet:last-child { page-break-after: auto; }
-    .inv-table th { background: #f0f0f0; }
-    .sig-canvas { border: 1px solid #ccc; }
-    .row-num { color: #666; }
-    input, textarea { color: #000 !important; }
-    .photo-cell .thumb { width: 28px; height: 28px; border: 1px solid #999; }
-  }
-  .print-stack { display: none; }
-  @media print {
-    .print-stack { display: block; }
-    #inv-content { display: none; }
-  }
+:root{--bg:#fff;--surface:#f7f7f8;--border:#c0c0c0;--border-light:#e0e0e0;--text:#111;--text-sec:#555;--text-hi:#000;--accent:#2563eb;--accent-light:rgba(37,99,235,0.08)}
+@media(prefers-color-scheme:dark){:root{--bg:#0a0a0a;--surface:#1a1a1a;--border:#444;--border-light:#333;--text:#eee;--text-sec:#999;--text-hi:#fff;--accent-light:rgba(37,99,235,0.15)}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.4;padding:8px;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+body.dragging{touch-action:none;overflow:hidden}
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--text-hi);margin-bottom:10px;position:sticky;top:0;background:var(--bg);z-index:20;padding-top:2px}
+.tab-btn{padding:8px 14px;background:none;border:none;cursor:pointer;color:var(--text-sec);font-weight:600;font-size:13px;border-bottom:3px solid transparent;font-family:inherit;white-space:nowrap}
+.tab-btn.active{color:var(--text-hi);border-bottom-color:var(--text-hi)}
+.panel{display:none;padding-bottom:40px}
+.panel.active{display:block}
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:12px}
+.setup-grid .field{display:flex;flex-direction:column;gap:3px}
+.setup-grid label{font-size:11px;color:var(--text-sec);font-weight:600;text-transform:uppercase}
+.setup-grid input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:4px;background:var(--bg);font-size:14px;color:var(--text);font-family:inherit}
+.setup-grid input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.sheet{border:2px solid var(--text-hi);background:var(--bg);margin-bottom:16px}
+.sheet-top{display:grid;grid-template-columns:1fr auto auto;border-bottom:2px solid var(--text-hi)}
+.sheet-top>div{padding:6px 10px;border-right:1px solid var(--border)}
+.sheet-top>div:last-child{border-right:none}
+.sheet-mid{display:grid;grid-template-columns:1fr 1fr auto auto;border-bottom:1px solid var(--border)}
+.sheet-mid>div{padding:6px 10px;border-right:1px solid var(--border)}
+.sheet-mid>div:last-child{border-right:none}
+.lbl{font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-sec);font-weight:700;margin-bottom:2px}
+.legend-wrap{border-bottom:1px solid var(--border);padding:4px 6px;background:var(--surface)}
+.legend-title{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-sec);margin-bottom:2px}
+.legend-cols{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sym-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px 4px}
+.sym{font-size:9px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sym code{font-family:ui-monospace,monospace;font-weight:700;font-size:9px;margin-right:2px}
+.inv-table{width:100%;border-collapse:collapse}
+.inv-table th{border-bottom:2px solid var(--text-hi);border-right:1px solid var(--border);padding:5px 4px;font-size:9px;font-weight:700;text-transform:uppercase;text-align:center;background:var(--surface);line-height:1.2}
+.inv-table th:last-child{border-right:none}
+.inv-table td{border-bottom:1px solid var(--border-light);border-right:1px solid var(--border-light);padding:2px 3px;height:32px;vertical-align:middle}
+.inv-table td:last-child{border-right:none}
+.inv-table input[type="text"],.inv-table textarea{width:100%;border:none;background:transparent;font-size:13px;color:var(--text);font-family:inherit;padding:2px 4px;resize:none;line-height:1.3}
+.inv-table input:focus,.inv-table textarea:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-light)}
+.inv-table input[type="checkbox"]{width:18px;height:18px;accent-color:var(--text-hi);cursor:pointer;display:block;margin:0 auto}
+.row-num{text-align:center;font-family:ui-monospace,monospace;font-size:11px;color:var(--text-sec);user-select:none;touch-action:none;position:relative;width:36px;cursor:pointer}
+.row-num.source{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent);font-weight:700}
+.row-num.source::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.row-num.target{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.photo-cell{display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:wrap;min-width:44px}
+.thumb{width:22px;height:22px;object-fit:cover;border-radius:2px;cursor:pointer;border:1px solid var(--border)}
+.cam-btn{width:22px;height:22px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:2px;background:none;cursor:pointer;color:var(--text-sec);padding:0}
+.bottom-block{border-top:2px solid var(--text-hi);padding:10px}
+.sig-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.sig-box{border:1px solid var(--border);border-radius:4px;padding:8px;background:var(--bg)}
+.sig-box .lbl{margin-bottom:4px}
+.sig-canvas{width:100%;height:80px;display:block;cursor:crosshair;touch-action:none;background:var(--bg)}
+.tape-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:11px;border-top:1px solid var(--border);padding-top:8px}
+.tally-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:0;border:2px solid var(--text-hi);margin-bottom:12px}
+.tally-grid>div{padding:6px 8px;border-bottom:1px solid var(--border-light);border-right:1px solid var(--border-light);font-size:13px}
+.tally-grid .th{background:var(--surface);font-weight:700;font-size:10px;text-transform:uppercase;border-bottom:2px solid var(--text-hi)}
+.tally-grid>div:nth-child(3n){border-right:none}
+.cond-table{width:100%;border-collapse:collapse}
+.cond-table th{border-bottom:2px solid var(--text-hi);border-right:1px solid var(--border);padding:5px 4px;font-size:9px;font-weight:700;text-transform:uppercase;text-align:center;background:var(--surface)}
+.cond-table th:last-child{border-right:none}
+.cond-table td{border-bottom:1px solid var(--border-light);border-right:1px solid var(--border-light);padding:2px 3px;height:32px;vertical-align:middle}
+.cond-table td:last-child{border-right:none}
+.cond-table input,.cond-table textarea{width:100%;border:none;background:transparent;font-size:13px;color:var(--text);font-family:inherit;padding:2px 4px;resize:none}
+.cond-table input:focus,.cond-table textarea:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-light)}
+.page-tabs,.lot-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+.page-tab,.lot-tab{padding:5px 12px;border-radius:4px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12px;font-family:inherit;font-weight:600}
+.page-tab.active,.lot-tab.active{background:var(--text-hi);color:var(--bg);border-color:var(--text-hi)}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:4px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12px;font-family:inherit;font-weight:600;touch-action:manipulation}
+.btn-primary{background:var(--text-hi);color:var(--bg);border-color:var(--text-hi)}
+.btn-ghost{background:transparent;border:none;padding:2px;color:var(--text-sec)}
+.btn-sm{padding:4px 8px;font-size:11px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.overlay img{max-width:100%;max-height:100%;border-radius:4px;object-fit:contain}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text-hi);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;z-index:50;opacity:0;transition:opacity 150ms;pointer-events:none}
+.toast.show{opacity:1}
+.flex{display:flex}.between{justify-content:space-between}.items-center{align-items:center}.gap-1{gap:4px}.gap-2{gap:8px}.mb-1{margin-bottom:4px}.mb-2{margin-bottom:8px}.mt-2{margin-top:8px}.mono{font-family:ui-monospace,monospace}.small{font-size:11px;color:var(--text-sec)}
+@media print{body{padding:0;background:#fff;color:#000}.tabs,.btn,.page-tabs,.lot-tabs,.cam-btn,.btn-ghost,.toast,#overlay,.no-print{display:none!important}.panel{display:block!important}#panel-setup,#panel-tally,#panel-premove,#panel-postmove{display:none!important}#panel-inventory{display:block!important}.sheet{border:2px solid #000;page-break-after:always;margin-bottom:0}.sheet:last-child{page-break-after:auto}.inv-table th{background:#f0f0f0}.sig-canvas{border:1px solid #ccc}.row-num{color:#666}input,textarea{color:#000!important}.photo-cell .thumb{width:28px;height:28px;border:1px solid #999}}
+.print-stack{display:none}
+@media print{.print-stack{display:block}#inv-content{display:none}}
 </style>
 </head>
 <body>
@@ -484,17 +105,14 @@
     <div class="field"><label>Driver (Dest)</label><input id="s-ddest" oninput="updateSetup()"></div>
     <div class="field"><label>Date (Dest)</label><input type="date" id="s-ddest-date" oninput="updateSetup()"></div>
   </div>
-  <button class="btn btn-danger btn-sm no-print" onclick="clearAllData()">Clear all saved data</button>
+  <button class="btn btn-sm no-print" onclick="clearAllData()" style="color:#dc2626">Clear all saved data</button>
 </div>
 
 <div id="panel-inventory" class="panel">
   <div class="no-print flex between items-center mb-2" style="flex-wrap:wrap;gap:6px;">
     <div class="lot-tabs" id="lot-tabs"></div>
     <div class="flex items-center gap-1">
-      <button class="btn btn-primary btn-sm" onclick="exportPDF()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="margin-right:2px;"><path d="M12 15V3m0 0L8 7m4-4l4 4M3 15v4a2 2 0 002 2h14a2 2 0 002-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Export PDF
-      </button>
+      <button class="btn btn-primary btn-sm" onclick="exportPDF()">Export PDF</button>
       <button class="btn btn-sm" onclick="addPage()">+ Page</button>
       <button class="btn btn-sm" onclick="addLot()">+ Lot</button>
     </div>
@@ -503,390 +121,155 @@
   <div id="print-stack" class="print-stack"></div>
 </div>
 
-<div id="panel-tally" class="panel">
-  <div id="tally-content"></div>
-</div>
-
-<div id="panel-premove" class="panel">
-  <div id="premove-content"></div>
-</div>
-
-<div id="panel-postmove" class="panel">
-  <div id="postmove-content"></div>
-</div>
+<div id="panel-tally" class="panel"><div id="tally-content"></div></div>
+<div id="panel-premove" class="panel"><div id="premove-content"></div></div>
+<div id="panel-postmove" class="panel"><div id="postmove-content"></div></div>
 
 <div id="overlay" class="overlay" onclick="this.style.display='none'"><img id="overlay-img" src="" alt=""></div>
 <div id="toast" class="toast"></div>
 
 <script>
-const ROWS = 30;
-const EXC_SYM = [
-  ['BE','Bent'],['BR','Broken'],['BU','Burned'],['CH','Chipped'],['M','Marred'],
-  ['D','Dented'],['CU','Contents & Condition Unknown'],['F','Faded'],['G','Gouged'],
-  ['L','Loose'],['SH','Short'],['MI','Mildew'],['MO','Moth Eaten'],['P','Peeling'],
-  ['R','Rubbed'],['SC','Scratched'],['Z','Cracked'],['O','Soiled'],['ST','Stained'],
-  ['S','Stretched'],['T','Torn'],['W','Badly Worn']
-];
-const LOC_SYM = [
-  ['1','Arm'],['2','Bottom'],['3','Corner'],['4','Front'],['5','Left'],
-  ['6','Leg'],['7','Rear'],['8','Right'],['9','Side'],['10','Top'],
-  ['11','Veneer'],['12','Edge'],['13','Center'],['14','Inside'],['15','Seat'],
-  ['16','Drawer'],['17','Door'],['18','Shelf'],['19','Hardware']
-];
+const ROWS=30;
+const EXC_SYM=[['BE','Bent'],['BR','Broken'],['BU','Burned'],['CH','Chipped'],['M','Marred'],['D','Dented'],['CU','Contents & Condition Unknown'],['F','Faded'],['G','Gouged'],['L','Loose'],['SH','Short'],['MI','Mildew'],['MO','Moth Eaten'],['P','Peeling'],['R','Rubbed'],['SC','Scratched'],['Z','Cracked'],['O','Soiled'],['ST','Stained'],['S','Stretched'],['T','Torn'],['W','Badly Worn']];
+const LOC_SYM=[['1','Arm'],['2','Bottom'],['3','Corner'],['4','Front'],['5','Left'],['6','Leg'],['7','Rear'],['8','Right'],['9','Side'],['10','Top'],['11','Veneer'],['12','Edge'],['13','Center'],['14','Inside'],['15','Seat'],['16','Drawer'],['17','Door'],['18','Shelf'],['19','Hardware']];
 
-let state = {
-  setup: { name:'', ref:'', origin:'', dest:'', bol:'', dOrig:'', dOrigDate:'', dDest:'', dDestDate:'' },
-  lots: [{ id:1, tapeLot:'', tapeColor:'', pages:[makePage(1)] }],
-  currentLot: 0,
-  currentPage: 0,
-  premove: Array.from({length:25},()=>({loc:'',desc:'',imgs:[]})),
-  postmove: Array.from({length:25},()=>({loc:'',desc:'',imgs:[]})),
-  dragMode: false,
-  dupSource: null,
-  dragCurrent: null
-};
-
-function makePage(n) {
-  return {
-    pageNum: n,
-    items: Array.from({length:ROWS},(_,i)=>({
-      itemNo: i+1, check:false, carton:'', cp:false,
-      contents:'', room:'', shipperCheck:false, images:[]
-    })),
-    signature: null, propagate: true
-  };
+function loadState(){
+  try{
+    const raw=localStorage.getItem('inventoryApp');
+    if(raw){
+      const parsed=JSON.parse(raw);
+      if(parsed.lots) state=parsed;
+    }
+  }catch(e){}
 }
+function saveState(){ localStorage.setItem('inventoryApp',JSON.stringify(state)); }
+function clearAllData(){ if(confirm('Delete ALL saved data?')){ localStorage.removeItem('inventoryApp'); location.reload(); } }
 
-function curLot(){ return state.lots[state.currentLot]; }
-function curPages(){ return curLot().pages; }
-function curPage(){ return curPages()[state.currentPage]; }
+let state={setup:{name:'',ref:'',origin:'',dest:'',bol:'',dOrig:'',dOrigDate:'',dDest:'',dDestDate:''},lots:[{id:1,tapeLot:'',tapeColor:'',pages:[makePage(1)]}],currentLot:0,currentPage:0,premove:Array.from({length:25},()=>({loc:'',desc:'',imgs:[]})),postmove:Array.from({length:25},()=>({loc:'',desc:'',imgs:[]})),dragMode:false,dupSource:null,dragCurrent:null};
+loadState();
 
-function switchTab(t) {
+function makePage(n){return{pageNum:n,items:Array.from({length:ROWS},(_,i)=>({itemNo:i+1,check:false,carton:'',cp:false,contents:'',room:'',shipperCheck:false,images:[]})),signature:null,ownerSignature:null,propagate:true}}
+function curLot(){return state.lots[state.currentLot]}
+function curPages(){return curLot().pages}
+function curPage(){return curPages()[state.currentPage]}
+
+function switchTab(t){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+t));
-  if(t==='inventory') renderInv();
-  if(t==='tally') renderTally();
-  if(t==='premove') renderCond('premove');
-  if(t==='postmove') renderCond('postmove');
+  if(t==='inventory')renderInv();
+  if(t==='tally')renderTally();
+  if(t==='premove')renderCond('premove');
+  if(t==='postmove')renderCond('postmove');
 }
 
-function updateSetup() {
-  state.setup = {
-    name: g('s-name').value, ref: g('s-ref').value,
-    origin: g('s-origin').value, dest: g('s-dest').value,
-    bol: g('s-bol').value,
-    dOrig: g('s-dorig').value, dOrigDate: g('s-dorig-date').value,
-    dDest: g('s-ddest').value, dDestDate: g('s-ddest-date').value
-  };
-  saveState();
-  renderInv();
+function updateSetup(){
+  state.setup={name:g('s-name').value,ref:g('s-ref').value,origin:g('s-origin').value,dest:g('s-dest').value,bol:g('s-bol').value,dOrig:g('s-dorig').value,dOrigDate:g('s-dorig-date').value,dDest:g('s-ddest').value,dDestDate:g('s-ddest-date').value};
+  saveState(); renderInv();
 }
+function g(id){return document.getElementById(id)}
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
 
-function g(id){ return document.getElementById(id); }
-function esc(t){ const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+function addLot(){state.lots.push({id:state.lots.length+1,tapeLot:'',tapeColor:'',pages:[makePage(1)]});state.currentLot=state.lots.length-1;state.currentPage=0;saveState();renderInv()}
+function switchLot(i){state.currentLot=i;state.currentPage=0;saveState();renderInv()}
+function removeLot(i){if(state.lots.length<=1)return;state.lots.splice(i,1);state.lots.forEach((l,j)=>l.id=j+1);if(state.currentLot>=state.lots.length)state.currentLot=state.lots.length-1;state.currentPage=0;saveState();renderInv()}
 
-/* ---------- Lots ---------- */
-function addLot() {
-  const id = state.lots.length + 1;
-  state.lots.push({ id, tapeLot:'', tapeColor:'', pages:[makePage(1)] });
-  state.currentLot = state.lots.length - 1;
-  state.currentPage = 0;
-  saveState();
-  renderInv();
-}
-function switchLot(i) {
-  state.currentLot = i;
-  state.currentPage = 0;
-  saveState();
-  renderInv();
-}
-function removeLot(i) {
-  if(state.lots.length<=1) return;
-  state.lots.splice(i,1);
-  state.lots.forEach((l,j)=>l.id=j+1);
-  if(state.currentLot>=state.lots.length) state.currentLot=state.lots.length-1;
-  state.currentPage = 0;
-  saveState();
-  renderInv();
-}
+function addPage(){const prev=curPages()[curPages().length-1];const p=makePage(curPages().length+1);p.signature=prev.propagate?prev.signature:null;p.ownerSignature=prev.propagate?prev.ownerSignature:null;p.propagate=true;curPages().push(p);state.currentPage=curPages().length-1;saveState();renderInv()}
+function switchPage(i){state.currentPage=i;saveState();renderInv()}
+function removePage(i){if(curPages().length<=1)return;curPages().splice(i,1);curPages().forEach((p,j)=>p.pageNum=j+1);if(state.currentPage>=curPages().length)state.currentPage=curPages().length-1;saveState();renderInv()}
 
-/* ---------- Pages ---------- */
-function addPage() {
-  const prev = curPages()[curPages().length-1];
-  const p = makePage(curPages().length+1);
-  p.signature = prev.propagate ? prev.signature : null;
-  p.propagate = true;
-  curPages().push(p);
-  state.currentPage = curPages().length-1;
-  saveState();
-  renderInv();
-}
-function switchPage(i){ state.currentPage=i; saveState(); renderInv(); }
-function removePage(i){
-  if(curPages().length<=1) return;
-  curPages().splice(i,1);
-  curPages().forEach((p,j)=>p.pageNum=j+1);
-  if(state.currentPage>=curPages().length) state.currentPage=curPages().length-1;
-  saveState();
-  renderInv();
-}
+function updateItem(ri,f,v){curPage().items[ri][f]=v;saveState()}
 
-/* ---------- Items ---------- */
-function updateItem(ri, f, v){
-  curPage().items[ri][f]=v;
-  saveState();
-}
+/* Drag-to-fill */
+function onRowPointerDown(e,ri){e.preventDefault();state.dragMode=true;state.dupSource={ri};state.dragCurrent=ri;document.body.classList.add('dragging');toast('Drag to select rows, release to fill');updateRowHighlights()}
+document.addEventListener('pointermove',e=>{if(!state.dragMode)return;const el=document.elementFromPoint(e.clientX,e.clientY);if(!el)return;const rn=el.closest('.row-num');if(!rn)return;const ri=parseInt(rn.dataset.row);if(ri===state.dragCurrent)return;state.dragCurrent=ri;updateRowHighlights()})
+document.addEventListener('pointerup',()=>{if(!state.dragMode)return;const src=state.dupSource.ri,cur=state.dragCurrent,start=Math.min(src,cur),end=Math.max(src,cur),srcIt=curPage().items[src];let count=0;for(let i=start;i<=end;i++){if(i===src)continue;const it=curPage().items[i];it.carton=srcIt.carton;it.contents=srcIt.contents;it.room=srcIt.room;it.cp=srcIt.cp;count++}state.dragMode=false;state.dupSource=null;state.dragCurrent=null;document.body.classList.remove('dragging');document.querySelectorAll('.row-num').forEach(el=>el.classList.remove('source','target'));toast(count>0?`Filled ${count} rows`:'Cancelled');saveState();renderInv()})
+function updateRowHighlights(){document.querySelectorAll('.row-num').forEach(el=>{const ri=parseInt(el.dataset.row);el.classList.remove('source','target');if(!state.dupSource)return;if(ri===state.dupSource.ri){el.classList.add('source');return}const s=Math.min(state.dupSource.ri,state.dragCurrent),e=Math.max(state.dupSource.ri,state.dragCurrent);if(ri>=s&&ri<=e)el.classList.add('target')})}
 
-/* ---------- Drag-to-fill ---------- */
-function onRowPointerDown(e, ri){
-  e.preventDefault();
-  state.dragMode = true;
-  state.dupSource = {ri};
-  state.dragCurrent = ri;
-  document.body.classList.add('dragging');
-  toast('Drag to select rows, release to fill');
-  updateRowHighlights();
-}
-function onDocPointerMove(e){
-  if(!state.dragMode) return;
-  const el = document.elementFromPoint(e.clientX, e.clientY);
-  if(!el) return;
-  const rowNum = el.closest('.row-num');
-  if(!rowNum) return;
-  const ri = parseInt(rowNum.dataset.row);
-  if(ri===state.dragCurrent) return;
-  state.dragCurrent = ri;
-  updateRowHighlights();
-}
-function onDocPointerUp(e){
-  if(!state.dragMode) return;
-  const src = state.dupSource.ri;
-  const cur = state.dragCurrent;
-  const start = Math.min(src, cur);
-  const end = Math.max(src, cur);
-  const srcIt = curPage().items[src];
-  let count = 0;
-  for(let i=start;i<=end;i++){
-    if(i===src) continue;
-    const it = curPage().items[i];
-    it.carton = srcIt.carton;
-    it.contents = srcIt.contents;
-    it.room = srcIt.room;
-    it.cp = srcIt.cp;
-    count++;
-  }
-  state.dragMode = false;
-  state.dupSource = null;
-  state.dragCurrent = null;
-  document.body.classList.remove('dragging');
-  document.querySelectorAll('.row-num').forEach(el=>el.classList.remove('source','target'));
-  toast(count>0 ? `Filled ${count} rows` : 'Cancelled');
-  saveState();
-  renderInv();
-}
-function updateRowHighlights(){
-  document.querySelectorAll('.row-num').forEach(el=>{
-    const ri = parseInt(el.dataset.row);
-    el.classList.remove('source','target');
-    if(!state.dupSource) return;
-    if(ri===state.dupSource.ri){ el.classList.add('source'); return; }
-    const start = Math.min(state.dupSource.ri, state.dragCurrent);
-    const end = Math.max(state.dupSource.ri, state.dragCurrent);
-    if(ri>=start && ri<=end) el.classList.add('target');
-  });
-}
+/* Photos */
+function snapPhoto(ri){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture='environment';inp.onchange=e=>{Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{curPage().items[ri].images.push(ev.target.result);saveState();renderInv()};r.readAsDataURL(f)})};inp.click()}
+function delPhoto(ri,ii){curPage().items[ri].images.splice(ii,1);saveState();renderInv()}
+function showImg(src){g('overlay-img').src=src;g('overlay').style.display='flex'}
 
-/* ---------- Photos ---------- */
-function snapPhoto(ri){
-  const inp=document.createElement('input');
-  inp.type='file'; inp.accept='image/*'; inp.capture='environment';
-  inp.onchange=e=>{
-    Array.from(e.target.files).forEach(f=>{
-      const r=new FileReader();
-      r.onload=ev=>{ curPage().items[ri].images.push(ev.target.result); saveState(); renderInv(); };
-      r.readAsDataURL(f);
-    });
-  };
-  inp.click();
-}
-function delPhoto(ri, ii){ curPage().items[ri].images.splice(ii,1); saveState(); renderInv(); }
-function showImg(src){ g('overlay-img').src=src; g('overlay').style.display='flex'; }
-
-/* ---------- Signature ---------- */
-function initSig(){
-  const pi = state.currentPage;
-  const c=g('sig-'+pi); if(!c) return;
-  const dpr=window.devicePixelRatio||1;
-  const r=c.getBoundingClientRect();
-  c.width=r.width*dpr; c.height=r.height*dpr;
-  const ctx=c.getContext('2d');
-  ctx.scale(dpr,dpr);
-  ctx.lineWidth=1.5; ctx.lineCap='round'; ctx.lineJoin='round';
-  ctx.strokeStyle=getComputedStyle(document.body).color;
-
+/* Signature */
+function initSig(which){
+  const id=which==='owner'?'owner-sig-':'sig-';
+  const field=which==='owner'?'ownerSignature':'signature';
+  const c=g(id+state.currentPage);if(!c)return;
+  const dpr=window.devicePixelRatio||1,r=c.getBoundingClientRect();c.width=r.width*dpr;c.height=r.height*dpr;
+  const ctx=c.getContext('2d');ctx.scale(dpr,dpr);ctx.lineWidth=1.5;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=getComputedStyle(document.body).color;
   let dr=false;
-  const pos=e=>{ const rc=c.getBoundingClientRect(); const cx=e.touches?e.touches[0].clientX:e.clientX; const cy=e.touches?e.touches[0].clientY:e.clientY; return{x:cx-rc.left,y:cy-rc.top}; };
-  const start=e=>{ dr=true; const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); e.preventDefault(); };
-  const move=e=>{ if(!dr) return; const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); e.preventDefault(); };
-  const end=()=>{ dr=false; ctx.beginPath(); curPage().signature=c.toDataURL(); propagateSig(); };
-
-  c.addEventListener('mousedown',start);
-  c.addEventListener('mousemove',move);
-  c.addEventListener('mouseup',end);
-  c.addEventListener('mouseleave',end);
-  c.addEventListener('touchstart',start,{passive:false});
-  c.addEventListener('touchmove',move,{passive:false});
-  c.addEventListener('touchend',end);
-
-  if(curPage().signature){
-    const img=new Image();
-    img.onload=()=>ctx.drawImage(img,0,0,r.width,r.height);
-    img.src=curPage().signature;
-  }
+  const pos=e=>{const rc=c.getBoundingClientRect(),cx=e.touches?e.touches[0].clientX:e.clientX,cy=e.touches?e.touches[0].clientY:e.clientY;return{x:cx-rc.left,y:cy-rc.top}};
+  const start=e=>{dr=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault()};
+  const move=e=>{if(!dr)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault()};
+  const end=()=>{dr=false;ctx.beginPath();curPage()[field]=c.toDataURL();propagateSig()};
+  c.addEventListener('mousedown',start);c.addEventListener('mousemove',move);c.addEventListener('mouseup',end);c.addEventListener('mouseleave',end);c.addEventListener('touchstart',start,{passive:false});c.addEventListener('touchmove',move,{passive:false});c.addEventListener('touchend',end);
+  if(curPage()[field]){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0,r.width,r.height);img.src=curPage()[field]}
 }
-function clearSig(){
-  curPage().signature=null;
-  const c=g('sig-'+state.currentPage); if(c) c.getContext('2d').clearRect(0,0,c.width,c.height);
+function clearSig(which){
+  const field=which==='owner'?'ownerSignature':'signature';
+  const id=which==='owner'?'owner-sig-':'sig-';
+  curPage()[field]=null;
+  const c=g(id+state.currentPage);if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);
   propagateSig();
 }
 function propagateSig(){
-  const sig=curPage().signature;
-  const el=g('prop-'+state.currentPage);
-  const propagate=el?el.checked:true;
-  if(!propagate||!sig) return;
-  for(let i=state.currentPage+1;i<curPages().length;i++) if(curPages()[i].propagate) curPages()[i].signature=sig;
-  saveState();
-  renderInv();
-}
-
-/* ---------- Tally ---------- */
-function computeTally(){
-  const tally={}; let total=0;
-  state.lots.forEach(lot=>{
-    lot.pages.forEach(page=>{
-      page.items.forEach(it=>{
-        const c=String(it.carton).trim().toLowerCase();
-        if(!c) return;
-        if(c.includes('ctn')||c.includes('matt')||c.includes('carton')||c.includes('mattress')){
-          const key=String(it.carton).trim()||'Unknown';
-          tally[key]=(tally[key]||0)+1;
-          total++;
-        }
-      });
-    });
-  });
-  return {tally,total};
-}
-
-function renderTally(){
-  const {tally,total}=computeTally();
-  const s=state.setup;
-  let html=`
-    <div class="sheet">
-      <div style="padding:8px 10px;border-bottom:2px solid var(--text-hi);font-size:12px;font-weight:700;text-transform:uppercase;">
-        Carton & Mattress Tally
-      </div>
-      <div class="sheet-top">
-        <div><div class="lbl">Shipper</div><div style="font-size:14px;">${esc(s.name)||'—'}</div></div>
-        <div><div class="lbl">Ref</div><div style="font-size:14px;">${esc(s.ref)||'—'}</div></div>
-        <div><div class="lbl">BOL</div><div style="font-size:14px;">${esc(s.bol)||'—'}</div></div>
-      </div>
-    </div>
-    <div class="tally-grid">
-      <div class="th">Carton / Article Type</div>
-      <div class="th">Count</div>
-      <div class="th">Running Total</div>
-  `;
-  let running=0;
-  const sorted=Object.entries(tally).sort((a,b)=>b[1]-a[1]);
-  if(sorted.length===0){
-    html+=`<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-sec);">No cartons or mattresses entered yet.</div>`;
+  const sig=curPage().signature,ownerSig=curPage().ownerSignature;
+  const el=g('prop-'+state.currentPage),propagate=el?el.checked:true;
+  if(!propagate)return;
+  for(let i=state.currentPage+1;i<curPages().length;i++){
+    if(curPages()[i].propagate){
+      if(sig)curPages()[i].signature=sig;
+      if(ownerSig)curPages()[i].ownerSignature=ownerSig;
+    }
   }
-  sorted.forEach(([type,count])=>{
-    running+=count;
-    html+=`<div>${esc(type)}</div><div class="mono" style="text-align:center;">${count}</div><div class="mono" style="text-align:center;">${running}</div>`;
-  });
-  html+=`
-    <div style="background:var(--surface);font-weight:700;">TOTAL</div>
-    <div style="background:var(--surface);font-weight:700;" class="mono" style="text-align:center;">${total}</div>
-    <div style="background:var(--surface);font-weight:700;" class="mono" style="text-align:center;">${total}</div>
-    </div>
-  `;
-  g('tally-content').innerHTML=html;
+  saveState();renderInv();
 }
 
-/* ---------- Legend ---------- */
-function legendHTML(){
-  const exc = EXC_SYM.map(([c,l])=>`<div class="sym"><code>${esc(c)}</code>${esc(l)}</div>`).join('');
-  const loc = LOC_SYM.map(([c,l])=>`<div class="sym"><code>${esc(c)}</code>${esc(l)}</div>`).join('');
-  return `
-    <div class="legend-wrap">
-      <div class="legend-cols">
-        <div>
-          <div class="legend-title">Exception Symbols</div>
-          <div class="sym-grid">${exc}</div>
-        </div>
-        <div>
-          <div class="legend-title">Location Symbols</div>
-          <div class="sym-grid">${loc}</div>
-        </div>
-      </div>
-    </div>
-  `;
+/* Tally */
+function computeTally(){const tally={};let total=0;state.lots.forEach(lot=>lot.pages.forEach(page=>page.items.forEach(it=>{const c=String(it.carton).trim().toLowerCase();if(!c)return;if(c.includes('ctn')||c.includes('matt')||c.includes('carton')||c.includes('mattress')){const key=String(it.carton).trim()||'Unknown';tally[key]=(tally[key]||0)+1;total++}})));return{tally,total}}
+function renderTally(){const{tally,total}=computeTally(),s=state.setup;let html=`<div class="sheet"><div style="padding:8px 10px;border-bottom:2px solid var(--text-hi);font-size:12px;font-weight:700;text-transform:uppercase;">Carton & Mattress Tally</div><div class="sheet-top"><div><div class="lbl">Shipper</div><div style="font-size:14px;">${esc(s.name)||'—'}</div></div><div><div class="lbl">Ref</div><div style="font-size:14px;">${esc(s.ref)||'—'}</div></div><div><div class="lbl">BOL</div><div style="font-size:14px;">${esc(s.bol)||'—'}</div></div></div></div><div class="tally-grid"><div class="th">Carton / Article Type</div><div class="th">Count</div><div class="th">Running Total</div>`;let running=0;const sorted=Object.entries(tally).sort((a,b)=>b[1]-a[1]);if(sorted.length===0)html+=`<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-sec);">No cartons or mattresses entered yet.</div>`;sorted.forEach(([type,count])=>{running+=count;html+=`<div>${esc(type)}</div><div class="mono" style="text-align:center;">${count}</div><div class="mono" style="text-align:center;">${running}</div>`});html+=`<div style="background:var(--surface);font-weight:700;">TOTAL</div><div style="background:var(--surface);font-weight:700;" class="mono" style="text-align:center;">${total}</div><div style="background:var(--surface);font-weight:700;" class="mono" style="text-align:center;">${total}</div></div>`;g('tally-content').innerHTML=html}
+
+function legendHTML(){const exc=EXC_SYM.map(([c,l])=>`<div class="sym"><code>${esc(c)}</code>${esc(l)}</div>`).join('');const loc=LOC_SYM.map(([c,l])=>`<div class="sym"><code>${esc(c)}</code>${esc(l)}</div>`).join('');return`<div class="legend-wrap"><div class="legend-cols"><div><div class="legend-title">Exception Symbols</div><div class="sym-grid">${exc}</div></div><div><div class="legend-title">Location Symbols</div><div class="sym-grid">${loc}</div></div></div></div>`}
+
+function sigHTML(page,pi,forPrint,which){
+  const field=which==='owner'?'ownerSignature':'signature';
+  const label=which==='owner'?'Owner / Authorized Agent — Origin':'Driver / Owner — Origin';
+  const id=which==='owner'?'owner-sig-':'sig-';
+  if(forPrint)return`<div class="sig-box"><div class="lbl">${label}</div><div style="height:80px;border:1px solid var(--border);border-radius:2px;display:flex;align-items:center;justify-content:center;">${page[field]?`<img src="${page[field]}" style="max-width:100%;max-height:100%;">`:'<span style="color:var(--text-sec);font-size:12px;">No signature</span>'}</div></div>`;
+  return`<div class="sig-box"><div class="lbl">${label}</div><canvas id="${id}${pi}" class="sig-canvas"></canvas><div style="margin-top:4px;"><button class="btn btn-sm btn-ghost" onclick="clearSig('${which}')">Clear</button></div></div>`;
 }
 
-/* ---------- Page rendering ---------- */
-function pageHTML(page, lotObj, pi, forPrint){
+function pageHTML(page,lotObj,pi,forPrint){
   const s=state.setup;
-  const isCurrent = !forPrint && pi===state.currentPage && lotObj===curLot();
-  let html=`
-    <div class="sheet" ${forPrint?`style="page-break-after:always;"`:''}>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:2px solid var(--text-hi);">
-        <div style="font-size:11px;font-weight:700;">HOUSEHOLD GOODS DESCRIPTIVE INVENTORY</div>
-        <div class="mono" style="font-size:11px;">Lot ${lotObj.id} — Pg ${page.pageNum} / ${lotObj.pages.length}</div>
-      </div>
-      <div class="sheet-top">
-        <div><div class="lbl">Shipper's Name</div><div style="font-size:14px;">${esc(s.name)||'&nbsp;'}</div></div>
-        <div><div class="lbl">Carrier's Ref No</div><div style="font-size:14px;">${esc(s.ref)||'&nbsp;'}</div></div>
-        <div><div class="lbl">Bill of Lading No</div><div style="font-size:14px;">${esc(s.bol)||'&nbsp;'}</div></div>
-      </div>
-      <div class="sheet-mid">
-        <div><div class="lbl">Origin City, State</div><div style="font-size:14px;">${esc(s.origin)||'&nbsp;'}</div></div>
-        <div><div class="lbl">Destination City, State</div><div style="font-size:14px;">${esc(s.dest)||'&nbsp;'}</div></div>
-        <div><div class="lbl">Tape Lot No</div><div style="font-size:14px;">${esc(lotObj.tapeLot)||'&nbsp;'}</div></div>
-        <div><div class="lbl">Tape Color</div><div style="font-size:14px;">${esc(lotObj.tapeColor)||'&nbsp;'}</div></div>
-      </div>
-      ${legendHTML()}
-      <table class="inv-table">
-        <thead>
-          <tr>
-            <th style="width:36px;">Item<br>No</th>
-            <th style="width:32px;">Chk</th>
-            <th>Carton Size or Article</th>
-            <th style="width:32px;">CP</th>
-            <th>Contents or Condition</th>
-            <th style="width:70px;">Room</th>
-            <th style="width:36px;">Ship<br>Chk</th>
-            <th style="width:48px;">Photo</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
+  let html=`<div class="sheet"${forPrint?' style="page-break-after:always;"':''}><div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:2px solid var(--text-hi);"><div style="font-size:11px;font-weight:700;">HOUSEHOLD GOODS DESCRIPTIVE INVENTORY</div><div class="mono" style="font-size:11px;">Lot ${lotObj.id} — Pg ${page.pageNum} / ${lotObj.pages.length}</div></div><div class="sheet-top"><div><div class="lbl">Shipper's Name</div><div style="font-size:14px;">${esc(s.name)||'&nbsp;'}</div></div><div><div class="lbl">Carrier's Ref No</div><div style="font-size:14px;">${esc(s.ref)||'&nbsp;'}</div></div><div><div class="lbl">Bill of Lading No</div><div style="font-size:14px;">${esc(s.bol)||'&nbsp;'}</div></div></div><div class="sheet-mid"><div><div class="lbl">Origin City, State</div><div style="font-size:14px;">${esc(s.origin)||'&nbsp;'}</div></div><div><div class="lbl">Destination City, State</div><div style="font-size:14px;">${esc(s.dest)||'&nbsp;'}</div></div><div><div class="lbl">Tape Lot No</div><div style="font-size:14px;">${esc(lotObj.tapeLot)||'&nbsp;'}</div></div><div><div class="lbl">Tape Color</div><div style="font-size:14px;">${esc(lotObj.tapeColor)||'&nbsp;'}</div></div></div>${legendHTML()}<table class="inv-table"><thead><tr><th style="width:36px;">Item<br>No</th><th style="width:32px;">Chk</th><th>Carton Size or Article</th><th style="width:32px;">CP</th><th>Contents or Condition</th><th style="width:70px;">Room</th><th style="width:36px;">Ship<br>Chk</th><th style="width:48px;">Photo</th></tr></thead><tbody>`;
+  page.items.forEach((it,idx)=>{const imgs=it.images.map((img,i)=>`<img src="${img}" class="thumb"${forPrint?'':' onclick="showImg(\''+img+'\')"'} alt="">${forPrint?'':`<button class="btn-ghost" style="padding:0;width:12px;" onclick="delPhoto(${idx},${i})"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>`}`).join('');html+=`<tr><td class="row-num" data-row="${idx}"${forPrint?'':` onpointerdown="onRowPointerDown(event,${idx})"`}>${it.itemNo}</td><td><input type="checkbox"${it.check?' checked':''}${forPrint?' disabled':` onchange="updateItem(${idx},'check',this.checked)"`}></td><td><input type="text" value="${esc(it.carton)}"${forPrint?' readonly':` oninput="updateItem(${idx},'carton',this.value)"`}></td><td><input type="checkbox"${it.cp?' checked':''}${forPrint?' disabled':` onchange="updateItem(${idx},'cp',this.checked)"`}></td><td><textarea rows="1"${forPrint?' readonly':` oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';updateItem(${idx},'contents',this.value)"`}>${esc(it.contents)}</textarea></td><td><input type="text" value="${esc(it.room)}"${forPrint?' readonly':` oninput="updateItem(${idx},'room',this.value)"`}></td><td><input type="checkbox"${it.shipperCheck?' checked':''}${forPrint?' disabled':` onchange="updateItem(${idx},'shipperCheck',this.checked)"`}></td><td class="photo-cell">${imgs}${forPrint?'':`<button class="cam-btn" onclick="snapPhoto(${idx})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`}</td></tr>`});
+  html+=`</tbody></table><div class="bottom-block"><div class="flex between items-center mb-1"><div class="small">Total cartons counted: <span class="mono">${pageCartonTotal(page)}</span></div>${forPrint?'':`<label class="small" style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="prop-${pi}"${page.propagate?' checked':''} onchange="state.lots[${state.currentLot}].pages[${pi}].propagate=this.checked; propagateSig();">Push-through signature</label>`}</div><div class="sig-row">${sigHTML(page,pi,forPrint,'driver')}${sigHTML(page,pi,forPrint,'owner')}</div><div class="sig-row"><div class="sig-box" style="grid-column:1/-1;"><div class="lbl">Driver / Owner — Destination</div><div style="height:80px;border:1px dashed var(--border);border-radius:2px;display:flex;align-items:center;justify-content:center;color:var(--text-sec);font-size:12px;">Sign at destination</div></div></div><div class="tape-row"><div><div class="lbl">Driver (Origin)</div><div>${esc(s.dOrig)||'—'}</div></div><div><div class="lbl">Date</div><div>${esc(s.dOrigDate)||'—'}</div></div><div><div class="lbl">Driver (Dest)</div><div>${esc(s.dDest)||'—'}</div></div><div><div class="lbl">Date</div><div>${esc(s.dDestDate)||'—'}</div></div></div></div></div>`;
+  return html;
+}
 
-  page.items.forEach((it, idx)=>{
-    const imgs=it.images.map((img,i)=>`
-      <img src="${img}" class="thumb" ${forPrint?'':'onclick="showImg(\''+img+'\')"'} alt="">
-      ${forPrint?'':`<button class="btn-ghost" style="padding:0;width:12px;" onclick="delPhoto(${idx},${i})">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-      </button>`}
-    `).join('');
+function pageCartonTotal(page){let t=0;page.items.forEach(it=>{const m=String(it.carton).match(/^\s*(\d+(?:\.\d+)?)/);if(m)t+=parseFloat(m[1])});return t.toFixed(1).replace(/\.0$/,'')}
 
-    html+=`
-      <tr>
-        <td class="row-num" data-row="${idx}" ${forPrint?'':`onpointerdown="onRowPointerDown(event,${idx})"`}>
-          ${it.itemNo}
-        </td>
-        <td><input type="checkbox" ${it.check?'checked':''} ${forPrint?'disabled':`onchange="updateItem(${idx},'check',this.checked)"`}></td>
-        <td><input type="text" value="${esc(it.carton)}" ${forPrint?'readonly':`oninput="updateItem(${idx},'carton',this.value)"`}></td>
-        <td><input type="checkbox" ${it.cp?'checked':''} ${forPrint?'disabled':`onchange="updateItem(${idx},'cp',this.checked)"`}></td>
-        <td><textarea rows="1" ${
+function renderInv(){
+  const lot=curLot();
+  g('lot-tabs').innerHTML=state.lots.map((l,i)=>`<button class="lot-tab ${i===state.currentLot?'active':''}" onclick="switchLot(${i})">Lot ${l.id}${state.lots.length>1?`<span style="margin-left:4px;opacity:0.5;" onclick="event.stopPropagation();removeLot(${i})">×</span>`:''}</button>`).join('');
+  g('inv-content').innerHTML=pageHTML(curPage(),lot,state.currentPage,false);
+  requestAnimationFrame(()=>{initSig();initSig('owner')});
+}
+
+function exportPDF(){const stack=g('print-stack');stack.innerHTML=state.lots.map(lot=>lot.pages.map((p,i)=>pageHTML(p,lot,i,true)).join('')).join('');toast('Preparing PDF...');setTimeout(()=>{window.print();stack.innerHTML=''},300)}
+
+function condPhoto(type,idx){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture='environment';inp.onchange=e=>{Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{state[type][idx].imgs.push(ev.target.result);saveState();renderCond(type)};r.readAsDataURL(f)})};inp.click()}
+function delCondPhoto(type,idx,i){state[type][idx].imgs.splice(i,1);saveState();renderCond(type)}
+
+function renderCond(type){
+  const container=g(type+'-content'),s=state.setup,list=state[type],label=type==='premove'?'Pre-move Condition':'Post-move Condition';
+  let html=`<div class="sheet" style="margin-bottom:10px;"><div style="padding:6px 10px;border-bottom:2px solid var(--text-hi);font-size:11px;font-weight:700;text-transform:uppercase;">${label}</div><div class="sheet-top"><div><div class="lbl">Shipper</div><div style="font-size:14px;">${esc(s.name)||'—'}</div></div><div><div class="lbl">Ref</div><div style="font-size:14px;">${esc(s.ref)||'—'}</div></div><div><div class="lbl">Date</div><div style="font-size:14px;">${esc(type==='premove'?s.dOrigDate:s.dDestDate)||'—'}</div></div></div></div><table class="cond-table"><thead><tr><th style="width:36px;">No</th><th style="width:120px;">Location / Room</th><th>Condition Description</th><th style="width:48px;">Photo</th></tr></thead><tbody>`;
+  list.forEach((it,idx)=>{const imgs=it.imgs.map((img,i)=>`<img src="${img}" class="thumb" onclick="showImg('${img}')" alt=""><button class="btn-ghost" style="padding:0;width:12px;" onclick="delCondPhoto('${type}',${idx},${i})"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>`).join('');html+=`<tr><td class="mono" style="text-align:center;color:var(--text-sec);font-size:11px;">${idx+1}</td><td><input type="text" value="${esc(it.loc)}" oninput="state.${type}[${idx}].loc=this.value;saveState()"></td><td><textarea rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';state.${type}[${idx}].desc=this.value;saveState()">${esc(it.desc)}</textarea></td><td class="photo-cell">${imgs}<button class="cam-btn" onclick="condPhoto('${type}',${idx})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></td></tr>`});
+  html+=`</tbody></table>`;container.innerHTML=html;
+}
+
+function toast(msg){const t=g('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+window.addEventListener('resize',()=>{if(curPage()){initSig();initSig('owner')}});
+</script>
+</body>
+</html>

@@ -1,276 +1,304 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Moving Inventory App</title>
-  <style>
-    :root {
-      --primary: #2563eb;
-      --danger: #dc2626;
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --border: #e2e8f0;
-      --text: #0f172a;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Household Goods Descriptive Inventory</title>
+<style>
+:root{--bg:#fff;--surface:#f7f7f8;--border:#c0c0c0;--border-light:#e0e0e0;--text:#111;--text-sec:#555;--text-hi:#000;--accent:#2563eb;--accent-light:rgba(37,99,235,0.08);--danger:#dc2626;--void:#991b1b}
+@media(prefers-color-scheme:dark){:root{--bg:#0a0a0a;--surface:#1a1a1a;--border:#444;--border-light:#333;--text:#eee;--text-sec:#999;--text-hi:#fff;--accent-light:rgba(37,99,235,0.15)}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.4;padding:8px;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+body.dragging{touch-action:none;overflow:hidden}
 
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); }
-    .container { max-width: 1100px; margin: 0 auto; background: var(--surface); padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+/* Home */
+#home-view{display:block}
+#job-view{display:none}
+.job-card{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;background:var(--surface);cursor:pointer;transition:transform .1s}
+.job-card:active{transform:scale(.99)}
+.job-title{font-weight:600;font-size:14px}
+.job-meta{font-size:12px;color:var(--text-sec);margin-top:4px}
+.job-date{font-size:11px;color:var(--text-sec);margin-top:2px}
 
-    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field label { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: #64748b; }
-    .field input { padding: 10px; border: 1fr solid var(--border); border-radius: 4px; font-size: 1rem; }
+/* Tabs */
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--text-hi);margin-bottom:10px;position:sticky;top:0;background:var(--bg);z-index:20;padding-top:2px}
+.tab-btn{padding:8px 14px;background:none;border:none;cursor:pointer;color:var(--text-sec);font-weight:600;font-size:13px;border-bottom:3px solid transparent;font-family:inherit;white-space:nowrap}
+.tab-btn.active{color:var(--text-hi);border-bottom-color:var(--text-hi)}
+.panel{display:none;padding-bottom:40px}
+.panel.active{display:block}
 
-    .inventory-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    .inventory-table th, .inventory-table td { border: 1px solid var(--border); padding: 8px; text-align: left; }
-    .inventory-table th { background: #f1f5f9; font-size: 0.85rem; }
+/* Setup */
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:12px}
+.setup-grid .field{display:flex;flex-direction:column;gap:3px}
+.setup-grid label{font-size:11px;color:var(--text-sec);font-weight:600;text-transform:uppercase}
+.setup-grid input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:4px;background:var(--bg);font-size:14px;color:var(--text);font-family:inherit}
+.setup-grid input:focus{outline:2px solid var(--accent);outline-offset:-1px}
 
-    .row-relative { position: relative; }
-    .input-cell { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
+/* Sheet */
+.sheet{border:2px solid var(--text-hi);background:var(--bg);margin-bottom:16px}
+.sheet-top{display:grid;grid-template-columns:1fr auto auto;border-bottom:2px solid var(--text-hi)}
+.sheet-top>div{padding:6px 10px;border-right:1px solid var(--border)}
+.sheet-top>div:last-child{border-right:none}
+.sheet-mid{display:grid;grid-template-columns:1fr 1fr auto auto;border-bottom:1px solid var(--border)}
+.sheet-mid>div{padding:6px 10px;border-right:1px solid var(--border)}
+.sheet-mid>div:last-child{border-right:none}
+.lbl{font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-sec);font-weight:700;margin-bottom:2px}
 
-    /* Auto-Suggest Dropdown */
-    .suggestions-box {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      z-index: 1000;
-      background: white;
-      border: 1fr solid #cbd5e1;
-      border-radius: 4px;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-      max-height: 150px;
-      overflow-y: auto;
-      width: 100%;
-    }
-    .suggestion-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
-    .suggestion-item:hover { background: #e2e8f0; }
+/* Legend */
+.legend-wrap{border-bottom:1px solid var(--border);padding:4px 6px;background:var(--surface)}
+.legend-title{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-sec);margin-bottom:2px}
+.legend-cols{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sym-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px 4px}
+.sym{font-size:9px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sym code{font-family:ui-monospace,monospace;font-weight:700;font-size:9px;margin-right:2px}
 
-    /* Void State Overlay */
-    .row-voided { position: relative; background: #fee2e2; }
-    .row-voided input { text-decoration: line-through; color: #991b1b; pointer-events: none; }
-    .void-overlay {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-weight: 900;
-      font-size: 1.5rem;
-      color: rgba(220, 38, 38, 0.6);
-      letter-spacing: 4px;
-      pointer-events: none;
-      text-transform: uppercase;
-    }
+/* Table */
+.inv-table{width:100%;border-collapse:collapse}
+.inv-table th{border-bottom:2px solid var(--text-hi);border-right:1px solid var(--border);padding:5px 2px;font-size:8px;font-weight:700;text-transform:uppercase;text-align:center;background:var(--surface);line-height:1.2}
+.inv-table th:last-child{border-right:none}
+.inv-table td{border-bottom:1px solid var(--border-light);border-right:1px solid var(--border-light);padding:2px 2px;height:32px;vertical-align:middle}
+.inv-table td:last-child{border-right:none}
+.inv-table input[type="text"],.inv-table textarea{width:100%;border:none;background:transparent;font-size:13px;color:var(--text);font-family:inherit;padding:2px 3px;resize:none;line-height:1.3}
+.inv-table input:focus,.inv-table textarea:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-light)}
+.inv-table input[type="checkbox"]{width:16px;height:16px;accent-color:var(--text-hi);cursor:pointer;display:block;margin:0 auto}
+.row-num{text-align:center;font-family:ui-monospace,monospace;font-size:11px;color:var(--text-sec);user-select:none;touch-action:none;position:relative;width:32px;cursor:pointer}
+.row-num.source{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent);font-weight:700}
+.row-num.source::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.row-num.target{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.row-num.selected{background:color-mix(in srgb,#f59e0b 20%,transparent);color:#b45309;font-weight:700}
+.row-num.voided{background:color-mix(in srgb,var(--danger) 12%,transparent);color:var(--danger);text-decoration:line-through}
 
-    .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
-    .btn-clear { background: #ef4444; color: white; }
-    .btn-void { background: #64748b; color: white; }
-    .btn-add { background: var(--primary); color: white; margin-top: 12px; }
-    
-    .actions-cell { display: flex; gap: 6px; }
-  </style>
+.photo-cell{display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:wrap;min-width:40px}
+.thumb{width:22px;height:22px;object-fit:cover;border-radius:2px;cursor:pointer;border:1px solid var(--border)}
+.cam-btn{width:22px;height:22px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:2px;background:none;cursor:pointer;color:var(--text-sec);padding:0;font-size:16px;line-height:1}
+
+/* Bottom */
+.bottom-block{border-top:2px solid var(--text-hi);padding:10px}
+.sig-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:10px}
+.sig-box{border:1px solid var(--border);border-radius:4px;padding:8px;background:var(--bg)}
+.sig-box .lbl{margin-bottom:4px}
+.sig-canvas{width:100%;height:70px;display:block;cursor:crosshair;touch-action:none;background:var(--bg)}
+.tape-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:11px;border-top:1px solid var(--border);padding-top:8px}
+
+/* Tally */
+.tally-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:0;border:2px solid var(--text-hi);margin-bottom:12px}
+.tally-grid>div{padding:6px 8px;border-bottom:1px solid var(--border-light);border-right:1px solid var(--border-light);font-size:13px}
+.tally-grid .th{background:var(--surface);font-weight:700;font-size:10px;text-transform:uppercase;border-bottom:2px solid var(--text-hi)}
+.tally-grid>div:nth-child(3n){border-right:none}
+
+/* Condition */
+.cond-table{width:100%;border-collapse:collapse}
+.cond-table th{border-bottom:2px solid var(--text-hi);border-right:1px solid var(--border);padding:5px 4px;font-size:9px;font-weight:700;text-transform:uppercase;text-align:center;background:var(--surface)}
+.cond-table th:last-child{border-right:none}
+.cond-table td{border-bottom:1px solid var(--border-light);border-right:1px solid var(--border-light);padding:2px 3px;height:32px;vertical-align:middle}
+.cond-table td:last-child{border-right:none}
+.cond-table input,.cond-table textarea{width:100%;border:none;background:transparent;font-size:13px;color:var(--text);font-family:inherit;padding:2px 4px;resize:none}
+.cond-table input:focus,.cond-table textarea:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-light)}
+
+/* Tabs */
+.page-tabs,.lot-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+.page-tab,.lot-tab{padding:5px 12px;border-radius:4px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12px;font-family:inherit;font-weight:600}
+.page-tab.active,.lot-tab.active{background:var(--text-hi);color:var(--bg);border-color:var(--text-hi)}
+
+.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:4px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12px;font-family:inherit;font-weight:600;touch-action:manipulation}
+.btn-primary{background:var(--text-hi);color:var(--bg);border-color:var(--text-hi)}
+.btn-ghost{background:transparent;border:none;padding:2px;color:var(--text-sec)}
+.btn-sm{padding:4px 8px;font-size:11px}
+
+/* Suggest box */
+#suggest-box{display:none;position:fixed;z-index:40;max-height:180px;overflow:auto;background:var(--bg);border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);min-width:160px}
+.suggest-item{padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border-light)}
+.suggest-item:hover,.suggest-item.active{background:var(--accent-light)}
+.suggest-item code{font-family:ui-monospace,monospace;font-weight:700;margin-right:4px}
+
+/* Modals */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.overlay img{max-width:100%;max-height:100%;border-radius:4px;object-fit:contain}
+#gallery-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:200;flex-direction:column}
+.gallery-header{display:flex;justify-content:space-between;align-items:center;padding:12px}
+.gallery-header span{color:#fff;font-weight:600}
+.gallery-grid{flex:1;overflow:auto;padding:12px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.gallery-img{position:relative}
+.gallery-img img{width:100%;border-radius:4px;display:block}
+.gallery-img button{position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer}
+.gallery-footer{padding:12px;display:flex;gap:8px}
+
+.toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:var(--text-hi);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;z-index:50;opacity:0;transition:opacity 150ms;pointer-events:none}
+.toast.show{opacity:1}
+
+/* Row actions */
+#row-actions{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:2px solid var(--text-hi);padding:8px;z-index:30;gap:8px;justify-content:center;align-items:center}
+
+.flex{display:flex}.between{justify-content:space-between}.items-center{align-items:center}.gap-1{gap:4px}.gap-2{gap:8px}.mb-1{margin-bottom:4px}.mb-2{margin-bottom:8px}.mt-2{margin-top:8px}.mono{font-family:ui-monospace,monospace}.small{font-size:11px;color:var(--text-sec)}
+
+@media print{body{padding:0;background:#fff;color:#000}.no-print{display:none!important}.panel{display:block!important}#home-view,#panel-setup,#panel-tally,#panel-premove,#panel-postmove{display:none!important}#job-view,#panel-inventory{display:block!important}.sheet{border:2px solid #000;page-break-after:always;margin-bottom:0}.sheet:last-child{page-break-after:auto}.inv-table th{background:#f0f0f0}.sig-canvas{border:1px solid #ccc}.row-num{color:#666}input,textarea{color:#000!important}.thumb{width:28px;height:28px;border:1px solid #999}}
+.print-stack{display:none}
+@media print{.print-stack{display:block}#inv-content{display:none}}
+</style>
 </head>
 <body>
 
-<div class="container">
-  <div class="header-grid">
-    <div class="field">
-      <label>Shipper Name</label>
-      <input type="text" id="shipperName" placeholder="Enter Shipper Name">
-    </div>
-    <div class="field">
-      <label>Registration Number</label>
-      <input type="text" id="regNumber" placeholder="Enter Registration Number">
-    </div>
+<!-- HOME -->
+<div id="home-view">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <h1 style="font-size:18px;font-weight:700;">Inventory Jobs</h1>
+    <button class="btn btn-primary" onclick="createJob()">+ New Job</button>
+  </div>
+  <div id="job-list"></div>
+</div>
+
+<!-- JOB -->
+<div id="job-view">
+  <div class="no-print flex between items-center mb-2" style="flex-wrap:wrap;gap:6px;">
+    <button class="btn btn-sm" onclick="goHome()">← Jobs</button>
+    <div style="font-size:12px;font-weight:600;" id="job-header"></div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="setup" onclick="switchTab('setup')">Setup</button>
+    <button class="tab-btn" data-tab="inventory" onclick="switchTab('inventory')">Inventory</button>
+    <button class="tab-btn" data-tab="tally" onclick="switchTab('tally')">Tally</button>
+    <button class="tab-btn" data-tab="premove" onclick="switchTab('premove')">Pre-move</button>
+    <button class="tab-btn" data-tab="postmove" onclick="switchTab('postmove')">Post-move</button>
   </div>
 
-  <table class="inventory-table">
-    <thead>
-      <tr>
-        <th style="width: 80px;">Item #</th>
-        <th>Contents & Condition</th>
-        <th style="width: 120px;">Actions</th>
-      </tr>
-    </thead>
-    <tbody id="inventoryBody"></tbody>
-  </table>
+  <div id="panel-setup" class="panel active">
+    <div class="setup-grid">
+      <div class="field"><label>Job Name</label><input id="j-name" oninput="updateJobName()"></div>
+      <div class="field"><label>Shipper's Name</label><input id="s-name" oninput="updateSetup()"></div>
+      <div class="field"><label>Carrier Ref No.</label><input id="s-ref" oninput="updateSetup()"></div>
+      <div class="field"><label>Origin City, State</label><input id="s-origin" oninput="updateSetup()"></div>
+      <div class="field"><label>Destination City, State</label><input id="s-dest" oninput="updateSetup()"></div>
+      <div class="field"><label>Bill of Lading No</label><input id="s-bol" oninput="updateSetup()"></div>
+      <div class="field"><label>Driver (Origin)</label><input id="s-dorig" oninput="updateSetup()"></div>
+      <div class="field"><label>Date (Origin)</label><input type="date" id="s-dorig-date" oninput="updateSetup()"></div>
+      <div class="field"><label>Driver (Dest)</label><input id="s-ddest" oninput="updateSetup()"></div>
+      <div class="field"><label>Date (Dest)</label><input type="date" id="s-ddest-date" oninput="updateSetup()"></div>
+    </div>
+    <button class="btn btn-sm no-print" onclick="deleteCurrentJob()" style="color:var(--danger)">Delete this job</button>
+  </div>
 
-  <button class="btn btn-add" onclick="addRow()">+ Add Line Item</button>
+  <div id="panel-inventory" class="panel">
+    <div class="no-print flex between items-center mb-2" style="flex-wrap:wrap;gap:6px;">
+      <div class="lot-tabs" id="lot-tabs"></div>
+      <div class="flex items-center gap-1">
+        <button class="btn btn-primary btn-sm" onclick="exportPDF()">Export PDF</button>
+        <button class="btn btn-sm" onclick="addPage()">+ Page</button>
+        <button class="btn btn-sm" onclick="addLot()">+ Lot</button>
+      </div>
+    </div>
+    <div id="inv-content"></div>
+    <div id="print-stack" class="print-stack"></div>
+  </div>
+
+  <div id="panel-tally" class="panel"><div id="tally-content"></div></div>
+  <div id="panel-premove" class="panel"><div id="premove-content"></div></div>
+  <div id="panel-postmove" class="panel"><div id="postmove-content"></div></div>
+</div>
+
+<!-- Gallery Modal -->
+<div id="gallery-modal">
+  <div class="gallery-header">
+    <span id="gallery-title">Photos</span>
+    <button class="btn-ghost" onclick="closeGallery()" style="color:#fff;font-size:20px;">✕</button>
+  </div>
+  <div class="gallery-grid" id="gallery-grid"></div>
+  <div class="gallery-footer">
+    <button class="btn btn-primary" onclick="galleryAddPhoto()" style="flex:1;">Add Photo</button>
+  </div>
+</div>
+
+<!-- Suggest Box -->
+<div id="suggest-box"></div>
+
+<!-- Image Overlay -->
+<div id="overlay" class="overlay" onclick="this.style.display='none'"><img id="overlay-img" src="" alt=""></div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Row Actions -->
+<div id="row-actions" class="no-print">
+  <span style="font-size:12px;font-weight:600;">Row <span id="sel-row-num"></span></span>
+  <button class="btn btn-sm" onclick="clearSelectedRow()">Clear</button>
+  <button class="btn btn-sm" id="void-btn" onclick="toggleVoidSelected()">Void</button>
+  <button class="btn btn-sm btn-ghost" onclick="deselectRow()">Cancel</button>
 </div>
 
 <script>
-  // Dictionary lists
-  const CARTON_ITEMS = ["dish ctn", "wardrobe", "1.5 ctn", "3.0 ctn", "4.5 ctn", "book ctn", "mirror ctn"];
-  const HOUSEHOLD_ITEMS = ["Sofa", "Dining Table", "Chair", "TV Stand", "Bed Frame", "Dressser", "Nightstand", "Desk", "Lamp"];
-  const INSIDE_CTN_SUGGESTIONS = ["Dishes", "Linens", "Books", "Toys", "Pots & Pans", "Clothes", "Pillows", "Glassware"];
-  const EXCEPTION_SYMBOLS = ["BR (Bruised)", "CH (Chipped)", "SC (Scratched)", "D (Dented)", "M (Missing)", "Z (Cracked)", "F (Faded)"];
-  const LOCATION_SYMBOLS = ["T (Top)", "B (Bottom)", "F (Front)", "R (Rear)", "L (Left)", "S (Side)", "I (Inside)"];
+const ROWS=30;
+const EXC_SYM=[['BE','Bent'],['BR','Broken'],['BU','Burned'],['CH','Chipped'],['M','Marred'],['D','Dented'],['CU','Contents & Condition Unknown'],['F','Faded'],['G','Gouged'],['L','Loose'],['SH','Short'],['MI','Mildew'],['MO','Moth Eaten'],['P','Peeling'],['R','Rubbed'],['SC','Scratched'],['Z','Cracked'],['O','Soiled'],['ST','Stained'],['S','Stretched'],['T','Torn'],['W','Badly Worn']];
+const LOC_SYM=[['1','Arm'],['2','Bottom'],['3','Corner'],['4','Front'],['5','Left'],['6','Leg'],['7','Rear'],['8','Right'],['9','Side'],['10','Top'],['11','Veneer'],['12','Edge'],['13','Center'],['14','Inside'],['15','Seat'],['16','Drawer'],['17','Door'],['18','Shelf'],['19','Hardware']];
 
-  let rowCounter = 0;
+const COMMON_ITEMS=[
+'1.0 ctn','1.5 ctn','2.0 ctn','3.0 ctn','4.0 ctn','4.5 ctn','5.0 ctn','6.0 ctn',
+'dish barrel','wardrobe','mirror ctn','lamp ctn','picture ctn','tv ctn',
+'sofa','loveseat','chair','ottoman','recliner','sectional','sleeper sofa',
+'dining table','coffee table','end table','nightstand','dresser','chest','armoire',
+'bookcase','desk','hutch','buffet','server','china cabinet','entertainment center',
+'twin matt.','full matt.','queen matt.','king matt.','twin box','full box','queen box','king box','mattress set',
+'refrigerator','freezer','washer','dryer','dishwasher','stove','range','microwave',
+'bicycle','grill','ladder','toolbox','vacuum','rug','lamp','mirror','picture','painting','plant',
+'outdoor furniture','umbrella','hose reel','exercise equipment','safe'
+];
 
-  function addRow() {
-    rowCounter++;
-    const tbody = document.getElementById('inventoryBody');
-    const tr = document.createElement('tr');
-    tr.id = `row-${rowCounter}`;
-    
-    tr.innerHTML = `
-      <td>${rowCounter}</td>
-      <td class="row-relative">
-        <input type="text" class="input-cell" oninput="handleInput(event, ${rowCounter})" onblur="hideSuggestions(${rowCounter})" autocomplete="off" placeholder="Type item or ctn...">
-        <div id="suggestions-${rowCounter}" class="suggestions-box" style="display:none;"></div>
-      </td>
-      <td class="actions-cell">
-        <button class="btn btn-clear" title="Clear Row" onclick="clearRow(${rowCounter})">X</button>
-        <button class="btn btn-void" onclick="toggleVoid(${rowCounter})">Void</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  }
+const COMMON_CONTENTS=[
+'dishes','glassware','silverware','pots & pans','linens','clothes','shoes','books','toys',
+'electronics','cords','tools','hardware','cleaning supplies','food','files','paperwork',
+'photos','mementos','fragile','crystal','china','decor','bathroom','kitchen','garage','basement'
+];
 
-  function handleInput(e, id) {
-    const input = e.target;
-    const val = input.value;
-    const cursor = input.selectionStart;
-    const sugBox = document.getElementById(`suggestions-${id}`);
-
-    // Parse text context relative to cursor position
-    const textBeforeCursor = val.slice(0, cursor);
-    
-    // Determine active segment/token currently being typed
-    const lastSlashIndex = textBeforeCursor.lastIndexOf('/');
-    const lastOpenParen = textBeforeCursor.lastIndexOf('(');
-    const lastCloseParen = textBeforeCursor.lastIndexOf(')');
-    
-    let currentToken = "";
-    let category = "";
-
-    // Protocol Routing:
-    // 1. Inside parentheses -> Suggest Exceptions
-    if (lastOpenParen > lastCloseParen) {
-      category = "exceptions";
-      currentToken = textBeforeCursor.slice(lastOpenParen + 1);
-    } 
-    // 2. If slash exists (Carton details before slash, exceptions/locations after)
-    else if (lastSlashIndex !== -1) {
-      category = "locations";
-      currentToken = textBeforeCursor.slice(lastSlashIndex + 1).trim();
-    } 
-    // 3. Normal root typing: Check if user is typing a carton
-    else {
-      const isCtn = CARTON_ITEMS.some(c => textBeforeCursor.toLowerCase().includes(c));
-      if (isCtn) {
-        category = "inside_carton";
-        const lastSpace = textBeforeCursor.lastIndexOf(' ');
-        currentToken = textBeforeCursor.slice(lastSpace + 1);
-      } else {
-        category = "general";
-        currentToken = textBeforeCursor;
+function loadState(){
+  try{
+    const raw=localStorage.getItem('inventoryJobs');
+    if(raw){appState=JSON.parse(raw);return}
+    // Migrate old single-job format
+    const old=localStorage.getItem('inventoryApp');
+    if(old){
+      const o=JSON.parse(old);
+      if(o.lots){
+        const job=makeJob('Migrated Job');
+        job.setup=o.setup||job.setup;
+        job.lots=o.lots||job.lots;
+        job.premove=o.premove||job.premove;
+        job.postmove=o.postmove||job.postmove;
+        appState.jobs=[job];
+        appState.currentJobId=job.id;
+        saveState();
+        localStorage.removeItem('inventoryApp');
+        return;
       }
     }
+  }catch(e){}
+  const first=makeJob('New Job');
+  appState={jobs:[first],currentJobId:first.id};
+  saveState();
+}
+function saveState(){localStorage.setItem('inventoryJobs',JSON.stringify(appState))}
+function makeJob(name){
+  return{id:Date.now().toString(),name:name||'New Job',created:new Date().toISOString(),modified:new Date().toISOString(),setup:{name:'',ref:'',origin:'',dest:'',bol:'',dOrig:'',dOrigDate:'',dDest:'',dDestDate:''},lots:[{id:1,tapeLot:'',tapeColor:'',pages:[makePage(1)]}],currentLot:0,currentPage:0,premove:Array.from({length:25},()=>({loc:'',desc:'',imgs:[]})),postmove:Array.from({length:25},()=>({loc:'',desc:'',imgs:[]}))}
+}
+function makePage(n){return{pageNum:n,items:Array.from({length:ROWS},(_,i)=>({itemNo:i+1,check:false,carton:'',cp:false,contents:'',room:'',shipperCheck:false,images:[],voided:false,voidReason:''})),signature:null,ownerSignature:null,destSignature:null,destOwnerSignature:null,propagate:true}}
+function curJob(){return appState.jobs.find(j=>j.id===appState.currentJobId)}
+function curLot(){return curJob().lots[curJob().currentLot]}
+function curPages(){return curLot().pages}
+function curPage(){return curPages()[curJob().currentPage]}
 
-    const suggestions = getSuggestions(category, currentToken.toLowerCase().trim());
-    renderSuggestions(suggestions, id, input, category);
-  }
+let appState={jobs:[],currentJobId:null};
+let galleryCtx=null; // {type:'inv'|'cond', lot?, page?, row?, condType?, idx?}
+let selectedRow=null;
+let activeSuggestInput=null;
+let activeSuggestType=null; // 'carton' or 'contents'
 
-  function getSuggestions(category, query) {
-    let source = [];
-    if (category === "exceptions") source = EXCEPTION_SYMBOLS;
-    else if (category === "locations") source = LOCATION_SYMBOLS;
-    else if (category === "inside_carton") source = INSIDE_CTN_SUGGESTIONS;
-    else source = [...CARTON_ITEMS, ...HOUSEHOLD_ITEMS];
+loadState();
 
-    if (!query) return source;
-    return source.filter(item => item.toLowerCase().includes(query));
-  }
+function g(id){return document.getElementById(id)}
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
 
-  function renderSuggestions(list, id, inputEl, category) {
-    const sugBox = document.getElementById(`suggestions-${id}`);
-    if (list.length === 0) {
-      sugBox.style.display = "none";
-      return;
-    }
-
-    sugBox.innerHTML = "";
-    list.forEach(item => {
-      const div = document.createElement('div');
-      div.className = "suggestion-item";
-      div.innerText = item;
-      // Use mousedown to prevent input blur preceding tap event
-      div.onmousedown = (e) => {
-        e.preventDefault();
-        applySuggestion(inputEl, item, category);
-        sugBox.style.display = "none";
-      };
-      sugBox.appendChild(div);
-    });
-    sugBox.style.display = "block";
-  }
-
-  function applySuggestion(input, suggestion, category) {
-    const val = input.value;
-    const cursor = input.selectionStart;
-    const textBefore = val.slice(0, cursor);
-    const textAfter = val.slice(cursor);
-
-    let updatedBefore = "";
-
-    if (category === "exceptions") {
-      const lastOpenParen = textBefore.lastIndexOf('(');
-      const codeOnly = suggestion.split(' ')[0]; // Extract code symbol
-      updatedBefore = textBefore.slice(0, lastOpenParen + 1) + codeOnly + ") ";
-    } else if (category === "locations") {
-      const lastSlash = textBefore.lastIndexOf('/');
-      const base = lastSlash !== -1 ? textBefore.slice(0, lastSlash + 1) : textBefore;
-      const codeOnly = suggestion.split(' ')[0];
-      updatedBefore = base + " " + codeOnly + " ";
-    } else {
-      // Replace target token cleanly
-      const words = textBefore.split(' ');
-      words.pop(); // Remove partial word being typed
-      words.push(suggestion);
-      updatedBefore = words.join(' ') + " ";
-    }
-
-    input.value = updatedBefore + textAfter;
-    input.focus();
-    input.setSelectionRange(updatedBefore.length, updatedBefore.length);
-  }
-
-  function hideSuggestions(id) {
-    setTimeout(() => {
-      const sugBox = document.getElementById(`suggestions-${id}`);
-      if (sugBox) sugBox.style.display = "none";
-    }, 150);
-  }
-
-  function clearRow(id) {
-    const row = document.getElementById(`row-${id}`);
-    const input = row.querySelector('.input-cell');
-    input.value = "";
-    if (row.classList.contains('row-voided')) {
-      toggleVoid(id);
-    }
-  }
-
-  function toggleVoid(id) {
-    const row = document.getElementById(`row-${id}`);
-    const isVoided = row.classList.toggle('row-voided');
-    
-    let overlay = row.querySelector('.void-overlay');
-    if (isVoided && !overlay) {
-      overlay = document.createElement('div');
-      overlay.className = 'void-overlay';
-      overlay.innerText = 'VOID';
-      row.querySelector('.row-relative').appendChild(overlay);
-    } else if (!isVoided && overlay) {
-      overlay.remove();
-    }
-  }
-
-  // Initialize with 5 blank rows
-  for (let i = 0; i < 5; i++) addRow();
-</script>
-</body>
-</html>
+/* ---------- Home ---------- */
+function renderHome(){
+  const list=g('job-list');
+  if(!appState.jobs.length){list.innerHTML='<div style="text-align:center;color:var(--text-sec);padding:40px;">No jobs yet. Tap + New Job to start.</div>';return}
+  list.innerHTML=appState.jobs.slice().reverse().map(j=>{
+    const d=new Date(j.created);
+    const dateStr=d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const totalLots=j.l
